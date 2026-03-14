@@ -67,7 +67,7 @@
         }
 
         .scrollable-content {
-            height: calc(100vh - 85px);
+            height: calc(100vh - 100px);
             overflow-y: auto;
             scrollbar-width: none;
         }
@@ -79,6 +79,10 @@
             background: rgba(16, 185, 129, 0.15) !important;
             box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
         }
+
+        .profile-icon-bg {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 96, 105, 0.2) 100%);
+        }
     </style>
 </head>
 <body>
@@ -86,7 +90,7 @@
     <div id="loading-overlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] flex items-center justify-center hidden">
         <div class="flex flex-col items-center">
             <div class="relative w-16 h-16 border-4 border-emerald-500/20 rounded-full border-t-emerald-500 animate-spin"></div>
-            <p class="mt-4 text-emerald-400 font-medium">ခဏစောင့်ပေးပါ...</p>
+            <p class="mt-4 text-emerald-400 font-medium">ခဏေစာင့္ေပးပါ...</p>
         </div>
     </div>
     
@@ -97,15 +101,12 @@
     
     <!-- Main App Content -->
     <div id="app-content-wrapper" class="max-w-xl mx-auto min-h-screen flex flex-col hidden relative">
-        <header id="app-header" class="px-6 py-6 flex flex-col items-center">
-            <div class="w-14 h-14 bg-emerald-500/10 rounded-2xl flex items-center justify-center mb-2 border border-emerald-500/20 shadow-lg shadow-emerald-500/10">
-                <i class="fa-solid fa-paper-plane text-2xl text-emerald-400"></i>
-            </div>
-            <!-- ခေါင်းစဉ် (Title) ကို ဖြုတ်လိုက်ပါသည် -->
-            <div id="user-info" class="text-[10px] px-3 py-1 bg-slate-800/50 rounded-full text-slate-400">Loading...</div>
+        <header id="app-header" class="px-6 py-4 flex flex-col items-center">
+            <!-- Icon ႏွင့္ စာသားမ်ားကို ဖယ္ရွားလိုက္ပါသည္ -->
+            <div id="user-info" class="text-[10px] px-4 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-emerald-400 font-medium tracking-wider">Loading User...</div>
         </header>
 
-        <main id="content-area" class="flex-grow px-4 pb-24 scrollable-content"></main>
+        <main id="content-area" class="flex-grow px-4 pb-28 scrollable-content"></main>
 
         <nav id="nav-footer" class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-md glass-card border-white/10 p-2 shadow-2xl z-40">
             <div class="flex justify-around items-center h-14" id="nav-container"></div>
@@ -163,7 +164,7 @@
                 if (user) {
                     userId = user.uid;
                     userEmail = user.email;
-                    document.getElementById('user-info').textContent = `USER: ${user.displayName || user.email.split('@')[0]}`;
+                    document.getElementById('user-info').textContent = `@${user.displayName || user.email.split('@')[0]}`;
                     document.getElementById('auth-screen').classList.add('hidden');
                     document.getElementById('app-content-wrapper').classList.remove('hidden');
                     
@@ -174,7 +175,6 @@
                         loadAdminBankInfo();
                         loadTransfers();
                         loadNotifications();
-                        // တန်းပေါ်အောင် ဒီမှာ ခေါ်ပေးထားပါသည်
                         setTimeout(() => showScreen('home'), 100);
                     }
                 } else {
@@ -192,17 +192,19 @@
             container.innerHTML = `
                 <div class="glass-card w-full max-w-sm p-8 space-y-6">
                     <div class="text-center space-y-2">
-                        <i class="fa-solid fa-shield-halved text-4xl text-emerald-500"></i>
-                        <h2 class="text-2xl font-bold">${isLogin ? 'အကောင့်ဝင်ပါ' : 'အကောင့်ဖွင့်ပါ'}</h2>
+                        <div class="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-500/20">
+                            <i class="fa-solid fa-user-shield text-3xl text-emerald-500"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold">${isLogin ? 'အေကာင့္ဝင္ပါ' : 'အေကာင့္ဖြင့္ပါ'}</h2>
                     </div>
                     <form onsubmit="event.preventDefault(); window.handleAuthSubmit(${isLogin})" class="space-y-4">
-                        ${!isLogin ? `<input type="text" id="username" required class="w-full p-4 rounded-2xl text-white outline-none" placeholder="အမည်">` : ''}
+                        ${!isLogin ? `<input type="text" id="username" required class="w-full p-4 rounded-2xl text-white outline-none" placeholder="သင့္အမည္">` : ''}
                         <input type="email" id="email" required class="w-full p-4 rounded-2xl text-white outline-none" placeholder="Email">
-                        <input type="password" id="password" required class="w-full p-4 rounded-2xl text-white outline-none" placeholder="Password (အနည်းဆုံး ၆ လုံး)">
-                        <button type="submit" class="btn-gradient w-full py-4 rounded-2xl text-white font-bold shadow-lg">${isLogin ? 'ဝင်မည်' : 'အကောင့်ဖွင့်မည်'}</button>
+                        <input type="password" id="password" required class="w-full p-4 rounded-2xl text-white outline-none" placeholder="Password (အနည္းဆုံး ၆ လုံး)">
+                        <button type="submit" class="btn-gradient w-full py-4 rounded-2xl text-white font-bold shadow-lg">${isLogin ? 'ဝင္မည္' : 'အေကာင့္ဖြင့္မည္'}</button>
                     </form>
                     <p class="text-center text-xs text-slate-400 cursor-pointer hover:text-emerald-400" onclick="window.toggleAuth(${!isLogin})">
-                        ${isLogin ? 'အကောင့်မရှိသေးပါက ဤနေရာတွင်ဖွင့်ပါ' : 'အကောင့်ရှိပြီးသားဖြစ်ပါက ဝင်ရန်'}
+                        ${isLogin ? 'အေကာင့္မရွိေသးပါက ဤေနရာတြင္ဖြင့္ပါ' : 'အေကာင့္ရွိၿပီးသားျဖစ္ပါက ဝင္ရန္'}
                     </p>
                 </div>`;
         };
@@ -219,16 +221,12 @@
                     await signInWithEmailAndPassword(auth, email, password);
                 } else {
                     const name = document.getElementById('username').value;
-                    if (password.length < 6) throw new Error("Password အနည်းဆုံး ၆ လုံးရှိရပါမည်");
+                    if (password.length < 6) throw new Error("Password အနည္းဆုံး ၆ လုံးရွိရပါမည္");
                     const uc = await createUserWithEmailAndPassword(auth, email, password);
                     await updateProfile(uc.user, { displayName: name });
                 }
-                showMessage("အောင်မြင်ပါသည်");
             } catch (e) {
-                let errorMsg = "အချက်အလက် မှားယွင်းနေပါသည်";
-                if(e.code === 'auth/email-already-in-use') errorMsg = "ဤ Email ဖြင့် အကောင့်ဖွင့်ထားပြီးသားဖြစ်နေပါသည်";
-                if(e.message) errorMsg = e.message;
-                showMessage(errorMsg, 'error');
+                showMessage(e.message || "အခ်က္အလက္ မွားယြင္းေနပါသည္", 'error');
             } finally {
                 document.getElementById('loading-overlay').classList.add('hidden');
             }
@@ -239,21 +237,21 @@
             if(!navContainer) return;
             navContainer.innerHTML = `
                 <button id="nav-home" onclick="showScreen('home')" class="nav-item flex flex-col items-center flex-1">
-                    <i class="fa-solid fa-house-chimney text-xl"></i><span class="text-[10px] mt-1 font-medium">ပင်မ</span>
+                    <i class="fa-solid fa-house-chimney text-xl"></i><span class="text-[10px] mt-1 font-medium">ပင္မ</span>
                 </button>
                 <button id="nav-transfer" onclick="showScreen('transfer')" class="nav-item flex flex-col items-center flex-1">
-                    <i class="fa-solid fa-circle-plus text-2xl"></i><span class="text-[10px] mt-1 font-medium">လွှဲမည်</span>
+                    <i class="fa-solid fa-circle-plus text-2xl"></i><span class="text-[10px] mt-1 font-medium">လႊဲမည္</span>
                 </button>
                 <button id="nav-inbox" onclick="showScreen('inbox')" class="nav-item flex flex-col items-center flex-1 relative">
-                    <i class="fa-solid fa-message text-xl"></i><span id="inbox-badge" class="absolute top-0 right-1/4 w-2 h-2 bg-rose-500 rounded-full hidden"></span><span class="text-[10px] mt-1 font-medium">အဝင်စာ</span>
+                    <i class="fa-solid fa-bell text-xl"></i><span id="inbox-badge" class="absolute top-0 right-1/4 w-2 h-2 bg-rose-500 rounded-full hidden"></span><span class="text-[10px] mt-1 font-medium">အဝင္စာ</span>
                 </button>
                 <button id="nav-profile" onclick="showScreen('profile')" class="nav-item flex flex-col items-center flex-1">
-                    <i class="fa-solid fa-user-circle text-xl"></i><span class="text-[10px] mt-1 font-medium">ကျွန်ုပ်</span>
+                    <i class="fa-solid fa-circle-user text-xl"></i><span class="text-[10px] mt-1 font-medium">ကျွန်ုပ်</span>
                 </button>`;
         };
 
         const PUBLIC_DATA_PATH = `artifacts/${APP_ID}/public/data`;
-        const loadRates = () => { onSnapshot(doc(db, PUBLIC_DATA_PATH, 'rates', 'current'), (ds) => { if (ds.exists()) { const d = ds.data(); currentRates = { THB_TO_MMK: d.rateBuyMMK || 121.95, rateHomeDeliveryTHB_THB_MMK: d.rateHomeDeliveryTHB_THB_MMK || 820, rateHomeDeliveryTHB_MMK_THB: d.rateHomeDeliveryTHB_MMK_THB || 850, lastUpdated: d.lastUpdated ? d.lastUpdated.toDate().toLocaleString('my-MM') : 'ယခုတင်' }; if (currentScreen === 'home') renderHome(); } }); };
+        const loadRates = () => { onSnapshot(doc(db, PUBLIC_DATA_PATH, 'rates', 'current'), (ds) => { if (ds.exists()) { const d = ds.data(); currentRates = { THB_TO_MMK: d.rateBuyMMK || 121.95, rateHomeDeliveryTHB_THB_MMK: d.rateHomeDeliveryTHB_THB_MMK || 820, rateHomeDeliveryTHB_MMK_THB: d.rateHomeDeliveryTHB_MMK_THB || 850, lastUpdated: d.lastUpdated ? d.lastUpdated.toDate().toLocaleString('my-MM') : 'ယခုတင္' }; if (currentScreen === 'home') renderHome(); } }); };
         const loadAdminBankInfo = () => { onSnapshot(doc(db, PUBLIC_DATA_PATH, 'config', 'bankInfo'), (ds) => { if (ds.exists()) { adminBankInfo = { ...adminBankInfo, ...ds.data() }; if (currentScreen === 'home') renderHome(); } }); };
         const loadTransfers = () => { onSnapshot(collection(db, PUBLIC_DATA_PATH, 'transfers'), (snapshot) => { userTransfers = snapshot.docs.map(d => ({ id: d.id, ...d.data() })).filter(t => t.senderId === userId).sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)); if (currentScreen === 'profile') renderProfile(); }); };
         const loadNotifications = () => { onSnapshot(collection(db, `artifacts/${APP_ID}/users/${userId}`, 'notifications'), (snapshot) => { userNotifications = snapshot.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)); const unread = userNotifications.filter(n => !n.isRead).length; if(document.getElementById('inbox-badge')) document.getElementById('inbox-badge').classList.toggle('hidden', unread === 0); if (currentScreen === 'inbox') renderInbox(); }); };
@@ -266,17 +264,17 @@
             content.innerHTML = `
                 <div class="space-y-6 animate-fadeIn">
                     <div class="flex justify-between items-end px-2">
-                        <div><h2 class="text-xl font-bold">ယနေ့ငွေလဲနှုန်း</h2><p class="text-xs text-slate-500">Update: ${currentRates.lastUpdated}</p></div>
+                        <div><h2 class="text-xl font-bold">ယေန႕ေငြလဲႏႈန္း</h2><p class="text-xs text-slate-500">Update: ${currentRates.lastUpdated}</p></div>
                         <div class="bg-emerald-500/10 text-emerald-400 text-[10px] px-2 py-1 rounded-lg border border-emerald-500/20 font-bold uppercase">Live</div>
                     </div>
                     <div class="grid gap-4">
-                        <div class="glass-card p-6 border-emerald-500/10"><h3 class="text-emerald-400 font-bold text-sm mb-4"><i class="fa-solid fa-wallet mr-2"></i> ဘဏ်ထဲသို့ငွေထည့်ရန်နှင့် ဖုန်းဘေ</h3><div class="flex items-center justify-between"><div class="text-center"><p class="text-[10px] text-slate-500 uppercase">ဘတ်</p><p class="text-2xl font-black">${rateBankBill}</p></div><i class="fa-solid fa-arrow-right text-emerald-500"></i><div class="text-center"><p class="text-[10px] text-slate-500 uppercase">ကျပ်</p><p class="text-2xl font-black">100,000</p></div></div></div>
-                        <div class="glass-card p-6 border-blue-500/10"><h3 class="text-blue-400 font-bold text-sm mb-4"><i class="fa-solid fa-house-chimney mr-2"></i> အိမ်သို့ငွေလွှဲရန်</h3><div class="flex items-center justify-between"><div class="text-center"><p class="text-[10px] text-slate-500 uppercase">ဘတ်</p><p class="text-2xl font-black">${rateHome}</p></div><i class="fa-solid fa-arrow-right text-blue-500"></i><div class="text-center"><p class="text-[10px] text-slate-500 uppercase">ကျပ်</p><p class="text-2xl font-black">100,000</p></div></div></div>
+                        <div class="glass-card p-6 border-emerald-500/10"><h3 class="text-emerald-400 font-bold text-sm mb-4"><i class="fa-solid fa-wallet mr-2"></i> ဘဏ္ထဲသို႔ေငြထည့္ရန္ႏွင့္ ဖုန္းေဘ</h3><div class="flex items-center justify-between"><div class="text-center"><p class="text-[10px] text-slate-500 uppercase">ဘတ္</p><p class="text-2xl font-black">${rateBankBill}</p></div><i class="fa-solid fa-arrow-right text-emerald-500"></i><div class="text-center"><p class="text-[10px] text-slate-500 uppercase">က်ပ္</p><p class="text-2xl font-black">100,000</p></div></div></div>
+                        <div class="glass-card p-6 border-blue-500/10"><h3 class="text-blue-400 font-bold text-sm mb-4"><i class="fa-solid fa-house-chimney mr-2"></i> အိမ္သို႔ေငြလႊဲရန္</h3><div class="flex items-center justify-between"><div class="text-center"><p class="text-[10px] text-slate-500 uppercase">ဘတ္</p><p class="text-2xl font-black">${rateHome}</p></div><i class="fa-solid fa-arrow-right text-blue-500"></i><div class="text-center"><p class="text-[10px] text-slate-500 uppercase">က်ပ္</p><p class="text-2xl font-black">100,000</p></div></div></div>
                     </div>
                     <div class="space-y-4">
                         <h3 class="text-sm font-bold text-slate-400 px-2 uppercase tracking-widest">MyanmarPay Accounts</h3>
                         <div class="grid grid-cols-2 gap-3">
-                            ${[1,2,3,4].map(i => `<div class="glass-card p-2"><img src="${adminBankInfo[`image${i}URL`] || 'https://placehold.co/200x100?text=QR'}" class="w-full h-24 object-cover rounded-xl mb-2"><button onclick="window.downloadImg('${adminBankInfo[`image${i}URL`]}')" class="w-full py-2 bg-slate-800 text-xs rounded-lg">သိမ်းမည်</button></div>`).join('')}
+                            ${[1,2,3,4].map(i => `<div class="glass-card p-2"><img src="${adminBankInfo[`image${i}URL`] || 'https://placehold.co/200x100?text=QR'}" class="w-full h-24 object-cover rounded-xl mb-2"><button onclick="window.downloadImg('${adminBankInfo[`image${i}URL`]}')" class="w-full py-2 bg-slate-800 text-xs rounded-lg">သိမ္းမည္</button></div>`).join('')}
                         </div>
                     </div>
                 </div>`;
@@ -294,9 +292,9 @@
                     </div>
                     <div class="glass-card p-6">
                         <form id="transfer-form" onsubmit="event.preventDefault(); window.submitTransfer('${currentTransferTab}')" class="space-y-5">
-                            <h2 class="text-lg font-bold text-white mb-2">${currentTransferTab === 'account' ? 'ဘဏ်ထဲသို့ လွှဲမည်' : currentTransferTab === 'phone-bill' ? 'ဖုန်းဘေထည့်မည်' : 'အိမ်အရောက်ပို့မည်'}</h2>
+                            <h2 class="text-lg font-bold text-white mb-2">${currentTransferTab === 'account' ? 'ဘဏ္ထဲသို႔ လႊဲမည္' : currentTransferTab === 'phone-bill' ? 'ဖုန္းေဘထည့္မည္' : 'အိမ္အေရာက္ပို႔မည္'}</h2>
                             <div id="dynamic-fields" class="space-y-4"></div>
-                            <button type="submit" class="btn-gradient w-full py-4 rounded-2xl text-white font-bold shadow-xl">ငွေလွှဲတောင်းဆိုမည်</button>
+                            <button type="submit" class="btn-gradient w-full py-4 rounded-2xl text-white font-bold shadow-xl">ေငြလႊဲေတာင္းဆိုမည္</button>
                         </form>
                     </div>
                 </div>`;
@@ -317,11 +315,11 @@
                         </div>
                     </div>
                     <input type="hidden" id="transferAccountType" required>
-                    <input type="text" id="senderName" placeholder="လွှဲသူအမည်" class="w-full p-4 rounded-2xl" required>
-                    <input type="text" id="receiverName" placeholder="လက်ခံသူအမည်" class="w-full p-4 rounded-2xl" required>
-                    <input type="tel" id="senderPhoneTH" placeholder="ထိုင်းဖုန်းနံပါတ်" class="w-full p-4 rounded-2xl" required>
-                    <input type="tel" id="receiverPhoneMM" placeholder="မြန်မာဖုန်းနံပါတ်" class="w-full p-4 rounded-2xl" required>
-                    <div class="space-y-2"><label class="text-[10px] font-bold text-slate-500 ml-2 uppercase">လက်ခံသူ၏ဘဏ် QR</label><input type="file" id="bankQrFile" accept="image/*" class="w-full p-2 text-xs text-slate-400" required></div>`;
+                    <input type="text" id="senderName" placeholder="လႊဲသူအမည္" class="w-full p-4 rounded-2xl" required>
+                    <input type="text" id="receiverName" placeholder="လက္ခံသူအမည္" class="w-full p-4 rounded-2xl" required>
+                    <input type="tel" id="senderPhoneTH" placeholder="ထိုင္းဖုန္းနံပါတ္" class="w-full p-4 rounded-2xl" required>
+                    <input type="tel" id="receiverPhoneMM" placeholder="ျမန္မာဖုန္းနံပါတ္" class="w-full p-4 rounded-2xl" required>
+                    <div class="space-y-2"><label class="text-[10px] font-bold text-slate-500 ml-2 uppercase">လက္ခံသူ၏ဘဏ္ QR</label><input type="file" id="bankQrFile" accept="image/*" class="w-full p-2 text-xs text-slate-400" required></div>`;
             } else if (currentTransferTab === 'phone-bill') {
                 html += `
                     <div class="grid grid-cols-4 gap-2">
@@ -332,35 +330,76 @@
                             </div>`).join('')}
                     </div>
                     <input type="hidden" id="phoneBillType" required>
-                    <input type="tel" id="phoneBillNumber" placeholder="ဘေထည့်မည့် ဖုန်းနံပါတ်" class="w-full p-4 rounded-2xl" required>`;
+                    <input type="tel" id="phoneBillNumber" placeholder="ေဘထည့္မည့္ ဖုန္းနံပါတ္" class="w-full p-4 rounded-2xl" required>`;
             } else {
-                html += `<input type="text" id="senderName" placeholder="လွှဲသူအမည်" class="w-full p-4 rounded-2xl" required><input type="text" id="receiverName" placeholder="လက်ခံသူအမည်" class="w-full p-4 rounded-2xl" required><textarea id="deliveryAddress" placeholder="အိမ်လိပ်စာ အပြည့်အစုံ" class="w-full p-4 rounded-2xl" rows="3" required></textarea>`;
+                html += `<input type="text" id="senderName" placeholder="လႊဲသူအမည္" class="w-full p-4 rounded-2xl" required><input type="text" id="receiverName" placeholder="လက္ခံသူအမည္" class="w-full p-4 rounded-2xl" required><textarea id="deliveryAddress" placeholder="အိမ္လိပ္စာ အျပည့္အစုံ" class="w-full p-4 rounded-2xl" rows="3" required></textarea>`;
             }
-            html += `<div class="relative"><input type="number" id="amountInput" placeholder="ပမာဏထည့်ပါ" class="w-full p-4 pr-16 rounded-2xl font-bold" required><select id="amountDirection" class="absolute right-2 top-2 bottom-2 bg-slate-800 text-xs rounded-xl border-none"><option value="THB_MMK">THB</option><option value="MMK_THB" ${currentTransferTab !== 'home' ? 'disabled' : ''}>MMK</option></select></div><div class="space-y-2"><label class="text-[10px] font-bold text-slate-500 ml-2 uppercase">ငွေလွှဲစလစ် (Receipt)</label><input type="file" id="receiptFile" accept="image/*" class="w-full p-2 text-xs text-slate-400" required></div>`;
+            html += `<div class="relative"><input type="number" id="amountInput" placeholder="ပမာဏထည့္ပါ" class="w-full p-4 pr-16 rounded-2xl font-bold" required><select id="amountDirection" class="absolute right-2 top-2 bottom-2 bg-slate-800 text-xs rounded-xl border-none"><option value="THB_MMK">THB</option><option value="MMK_THB" ${currentTransferTab !== 'home' ? 'disabled' : ''}>MMK</option></select></div><div class="space-y-2"><label class="text-[10px] font-bold text-slate-500 ml-2 uppercase">ေငြလႊဲစလစ္ (Receipt)</label><input type="file" id="receiptFile" accept="image/*" class="w-full p-2 text-xs text-slate-400" required></div>`;
             container.innerHTML = html;
         };
 
         const renderInbox = () => {
             const content = document.getElementById('content-area'); if(!content) return;
-            content.innerHTML = `<div class="space-y-4"><h2 class="text-xl font-bold px-2">အဝင်စာ (Inbox)</h2>${userNotifications.length === 0 ? `<div class="text-center py-20 text-slate-500">မက်ဆေ့ခ်ျမရှိသေးပါ</div>` : userNotifications.map(n => `<div onclick="window.markRead('${n.id}')" class="glass-card p-5 relative overflow-hidden ${n.isRead ? 'opacity-60' : 'border-emerald-500/30'}">${!n.isRead ? '<div class="absolute top-0 right-0 w-2 h-2 bg-emerald-500 rounded-full m-3"></div>' : ''}<h4 class="font-bold text-sm mb-1">${n.title}</h4><p class="text-slate-400 text-xs">${n.message}</p>${n.imageURL ? `<img src="${n.imageURL}" class="mt-3 rounded-xl max-h-40 w-full object-cover">` : ''}</div>`).join('')}</div>`;
+            content.innerHTML = `<div class="space-y-4"><h2 class="text-xl font-bold px-2">အဝင္စာ (Inbox)</h2>${userNotifications.length === 0 ? `<div class="text-center py-20 text-slate-500">မက္ေဆ့ခ္်မရွိေသးပါ</div>` : userNotifications.map(n => `<div onclick="window.markRead('${n.id}')" class="glass-card p-5 relative overflow-hidden ${n.isRead ? 'opacity-60' : 'border-emerald-500/30'}">${!n.isRead ? '<div class="absolute top-0 right-0 w-2 h-2 bg-emerald-500 rounded-full m-3"></div>' : ''}<h4 class="font-bold text-sm mb-1">${n.title}</h4><p class="text-slate-400 text-xs">${n.message}</p>${n.imageURL ? `<img src="${n.imageURL}" class="mt-3 rounded-xl max-h-40 w-full object-cover">` : ''}</div>`).join('')}</div>`;
         };
 
         const renderProfile = () => {
             const content = document.getElementById('content-area'); if(!content) return;
             const user = auth.currentUser;
+            const completedCount = userTransfers.filter(t => t.status === 'Completed').length;
+
             content.innerHTML = `
-                <div class="space-y-6">
-                    <div class="glass-card p-8 text-center relative overflow-hidden">
-                        <div class="w-20 h-20 bg-slate-800 rounded-3xl mx-auto flex items-center justify-center mb-4 border border-white/5 shadow-2xl"><i class="fa-solid fa-user text-3xl text-slate-600"></i></div>
-                        <h2 class="text-xl font-bold">${user.displayName || 'User'}</h2>
-                        <div class="mt-4 space-y-2 text-left bg-slate-900/40 p-4 rounded-2xl text-[10px] text-slate-400">
-                            <p><span class="text-slate-500">Email:</span> ${user.email}</p>
-                            <p><span class="text-slate-500">User ID:</span> ${userId}</p>
-                            <p><span class="text-slate-500">Join Date:</span> ${user.metadata.creationTime}</p>
+                <div class="space-y-6 animate-fadeIn">
+                    <!-- Profile Card -->
+                    <div class="glass-card p-6 flex flex-col items-center">
+                        <div class="relative">
+                            <div class="w-24 h-24 profile-icon-bg rounded-3xl flex items-center justify-center border border-emerald-500/30 shadow-xl">
+                                <i class="fa-solid fa-user-gear text-4xl text-emerald-500"></i>
+                            </div>
+                            <div class="absolute -bottom-2 -right-2 w-8 h-8 bg-emerald-500 rounded-full border-4 border-slate-900 flex items-center justify-center">
+                                <i class="fa-solid fa-check text-[10px] text-white"></i>
+                            </div>
                         </div>
-                        <button onclick="window.handleLogout()" class="mt-6 px-8 py-2 bg-rose-500/10 text-rose-500 text-xs font-bold rounded-full border border-rose-500/20">LOGOUT</button>
+                        <h2 class="mt-4 text-xl font-bold text-white">${user.displayName || 'WaiYan User'}</h2>
+                        <p class="text-slate-400 text-xs">${user.email}</p>
+                        
+                        <div class="flex gap-4 mt-6 w-full">
+                            <div class="flex-1 bg-slate-900/50 p-3 rounded-2xl text-center border border-white/5">
+                                <p class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Transfers</p>
+                                <p class="text-lg font-bold text-emerald-400">${userTransfers.length}</p>
+                            </div>
+                            <div class="flex-1 bg-slate-900/50 p-3 rounded-2xl text-center border border-white/5">
+                                <p class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Success</p>
+                                <p class="text-lg font-bold text-emerald-400">${completedCount}</p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="space-y-4"><h3 class="text-sm font-bold text-slate-400 px-2 uppercase tracking-widest">ငွေလွှဲမှုမှတ်တမ်း</h3>${userTransfers.map(t => `<div class="glass-card p-4 flex items-center justify-between border-white/5"><div><p class="text-xs font-bold">${t.amountTHB.toFixed(2)} THB ➜ ${t.amountMMK.toFixed(0)} MMK</p><p class="text-[10px] text-slate-500">${t.timestamp?.toDate().toLocaleDateString()}</p></div><span class="text-[8px] px-2 py-1 rounded-full font-black ${t.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}">${t.status.toUpperCase()}</span></div>`).join('')}</div>
+
+                    <!-- Details Card -->
+                    <div class="glass-card p-6 space-y-4">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400">
+                                <i class="fa-solid fa-id-badge"></i>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-slate-500 uppercase">User Identification</p>
+                                <p class="text-xs font-medium text-white">${userId}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <div class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400">
+                                <i class="fa-solid fa-calendar-check"></i>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-slate-500 uppercase">Member Since</p>
+                                <p class="text-xs font-medium text-white">${new Date(user.metadata.creationTime).toLocaleDateString('my-MM', {day:'numeric', month:'short', year:'numeric'})}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="window.handleLogout()" class="w-full py-4 glass-card border-rose-500/20 text-rose-500 font-bold text-sm hover:bg-rose-500 hover:text-white transition-all">
+                        <i class="fa-solid fa-right-from-bracket mr-2"></i> အေကာင့္မွထြက္ရန္
+                    </button>
                 </div>`;
         };
 
@@ -389,13 +428,13 @@
         window.showScreen = showScreen;
         window.downloadImg = (url) => { if(url) window.open(url, '_blank'); };
         window.handleLogout = async () => {
-            try { await signOut(auth); showMessage("ထွက်ပြီးပါပြီ"); } catch (e) { showMessage("Error logout", "error"); }
+            try { await signOut(auth); showMessage("အေကာင့္မွ ထြက္ၿပီးပါၿပီ"); } catch (e) { showMessage("Error logout", "error"); }
         };
 
         window.submitTransfer = async (type) => {
             const receipt = document.getElementById('receiptFile').files[0];
             const amount = parseFloat(document.getElementById('amountInput').value);
-            if (!receipt || isNaN(amount) || amount <= 0) return showMessage('အချက်အလက်အပြည့်အစုံ ဖြည့်ပါ', 'error');
+            if (!receipt || isNaN(amount) || amount <= 0) return showMessage('အခ်က္အလက္အျပည့္အစုံ ျဖည့္ပါ', 'error');
             
             document.getElementById('loading-overlay').classList.remove('hidden');
             try {
@@ -404,9 +443,9 @@
                 if (type === 'account') {
                     const qrFile = document.getElementById('bankQrFile').files[0];
                     if (qrFile) bankQrUrl = await uploadToCloudinary(qrFile);
-                    if (!document.getElementById('transferAccountType').value) throw new Error("အကောင့်အမျိုးအစားရွေးပါ");
+                    if (!document.getElementById('transferAccountType').value) throw new Error("အေကာင့္အမ်ိဳးအစားေ႐ြးပါ");
                 }
-                if (type === 'phone-bill' && !document.getElementById('phoneBillType').value) throw new Error("SIM အမျိုးအစားရွေးပါ");
+                if (type === 'phone-bill' && !document.getElementById('phoneBillType').value) throw new Error("SIM အမ်ိဳးအစားေ႐ြးပါ");
 
                 const dir = document.getElementById('amountDirection').value;
                 let thb, mmk;
@@ -428,8 +467,8 @@
                     deliveryAddress: document.getElementById('deliveryAddress')?.value || 'N/A'
                 };
                 await setDoc(doc(collection(db, PUBLIC_DATA_PATH, 'transfers')), data);
-                showMessage('ငွေလွှဲတောင်းဆိုမှု အောင်မြင်ပါသည်'); showScreen('home');
-            } catch (e) { showMessage(e.message || 'အမှားရှိပါသည်', 'error'); } 
+                showMessage('ေငြလႊဲေတာင္းဆိုမႈ ေအာင္ျမင္ပါသည္'); showScreen('home');
+            } catch (e) { showMessage(e.message || 'အမွားရွိပါသည္', 'error'); } 
             finally { document.getElementById('loading-overlay').classList.add('hidden'); }
         };
         window.markRead = async (id) => { await updateDoc(doc(db, `artifacts/${APP_ID}/users/${userId}`, 'notifications', id), { isRead: true }); };
