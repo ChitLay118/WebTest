@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ထိုင်း-မြန်မာငွေလွှဲ (WaiYan)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Padauk:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --bg-dark: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', 'Padauk', sans-serif;
+            background-color: var(--bg-dark);
+            color: #f1f5f9;
+            background-image: radial-gradient(circle at top right, #1e293b, #0f172a);
+            min-height: 100vh;
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-gradient {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            transition: all 0.3s ease;
+        }
+
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.1);
+        }
+
+        .nav-item {
+            color: #94a3b8;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item.active {
+            color: var(--primary) !important;
+            transform: translateY(-3px);
+        }
+
+        .nav-item.active i {
+            color: var(--primary) !important;
+        }
+
+        input, select, textarea {
+            background: rgba(15, 23, 42, 0.6) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+
+        input:focus {
+            border-color: var(--primary) !important;
+            outline: none;
+        }
+
+        .scrollable-content {
+            height: calc(100vh - 85px);
+            overflow-y: auto;
+            scrollbar-width: none;
+        }
+
+        .scrollable-content::-webkit-scrollbar { display: none; }
+
+        .payment-option.selected, .phone-bill-option.selected {
+            border-color: var(--primary) !important;
+            background: rgba(16, 185, 129, 0.15) !important;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading-overlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] flex items-center justify-center hidden">
+        <div class="flex flex-col items-center">
+            <div class="relative w-16 h-16 border-4 border-emerald-500/20 rounded-full border-t-emerald-500 animate-spin"></div>
+            <p class="mt-4 text-emerald-400 font-medium">ခဏစောင့်ပေးပါ...</p>
+        </div>
+    </div>
+    
+    <div id="message-box" class="fixed top-6 left-1/2 -translate-x-1/2 z-[110] w-[90%] max-w-md transition-all duration-500 transform translate-y-[-150%]"></div>
+
+    <div id="auth-screen" class="min-h-screen flex items-center justify-center p-6"></div>
+    
+    <div id="app-content-wrapper" class="max-w-xl mx-auto min-h-screen flex flex-col hidden relative">
+        <header id="app-header" class="px-6 py-8 flex flex-col items-center">
+            <div class="w-14 h-14 bg-emerald-500/10 rounded-2xl flex items-center justify-center mb-4 border border-emerald-500/20">
+                <i class="fa-solid fa-paper-plane text-2xl text-emerald-400"></i>
+            </div>
+            <h1 class="text-xl font-bold text-white">ထိုင်း-မြန်မာငွေလွှဲ (WaiYan)</h1>
+            <div id="user-info" class="text-[10px] mt-2 px-3 py-1 bg-slate-800/50 rounded-full text-slate-400">Loading...</div>
+        </header>
+
+        <main id="content-area" class="flex-grow px-4 pb-24 scrollable-content"></main>
+
+        <nav id="nav-footer" class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-md glass-card border-white/10 p-2 shadow-2xl z-40">
+            <div class="flex justify-around items-center h-14" id="nav-container"></div>
+        </nav>
+    </div>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, updateProfile, signOut } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+        
+        const CLOUDINARY_CLOUD_NAME = 'drizdw5nc';
+        const CLOUDINARY_UPLOAD_PRESET = 'waiyansoe118234';
+        const FIREBASE_CONFIG = {
+            apiKey: "AIzaSyBP6_0BX2UVepRHwof51jeO7k3s9yaRFaY",
+            authDomain: "thaimyanmarmoneytransfer.firebaseapp.com",
+            projectId: "thaimyanmarmoneytransfer",
+            storageBucket: "thaimyanmarmoneytransfer.firebasestorage.app",
+            messagingSenderId: "611201356727",
+            appId: "1:611201356727:web:8b1f96b45c8ce45ba34e32",
+            measurementId: "G-BPSKQW1QFH"
+        };
+
+        const APP_ID = 'thai-myanmar-remittance';
+        let app, db, auth, userId = null, userEmail = null, isAuthReady = false, currentScreen = 'home', currentTransferTab = 'account';
+
+        let currentRates = { 
+            THB_TO_MMK: 121.95, 
+            rateHomeDeliveryTHB_THB_MMK: 820, 
+            rateHomeDeliveryTHB_MMK_THB: 850, 
+            lastUpdated: 'Loading...' 
+        };
+        let adminBankInfo = { image1URL: '', image2URL: '', image3URL: '', image4URL: '', wavePayURL: '', kpayURL: '', atomURL: '', mptURL: '', mytelURL: '', u9URL: '' };
+        let userTransfers = [], userNotifications = [];
+
+        const showMessage = (msg, type = 'success') => {
+            const box = document.getElementById('message-box');
+            const bgColor = type === 'success' ? 'from-emerald-600 to-teal-700' : 'from-rose-600 to-red-700';
+            box.innerHTML = `<div class="bg-gradient-to-r ${bgColor} text-white p-4 rounded-2xl shadow-2xl flex items-center space-x-3 border border-white/20"><i class="fa-solid fa-info-circle"></i><p class="font-medium text-sm">${msg}</p></div>`;
+            box.classList.remove('translate-y-[-150%]'); box.classList.add('translate-y-0');
+            setTimeout(() => { box.classList.remove('translate-y-0'); box.classList.add('translate-y-[-150%]'); }, 4000);
+        };
+
+        const uploadToCloudinary = async (file) => {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+            const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, { method: 'POST', body: formData });
+            const data = await res.json();
+            return data.secure_url;
+        };
+
+        const initFirebase = async () => {
+            app = initializeApp(FIREBASE_CONFIG);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    userId = user.uid; userEmail = user.email;
+                    document.getElementById('user-info').textContent = `ID: ${userId.substring(0,10)}`;
+                    document.getElementById('auth-screen').classList.add('hidden');
+                    document.getElementById('app-content-wrapper').classList.remove('hidden');
+                    if (!isAuthReady) { isAuthReady = true; updateStaticText(); loadRates(); loadAdminBankInfo(); loadTransfers(); loadNotifications(); showScreen('home'); }
+                } else {
+                    isAuthReady = false; 
+                    document.getElementById('app-content-wrapper').classList.add('hidden');
+                    document.getElementById('auth-screen').classList.remove('hidden'); renderAuthScreen();
+                }
+            });
+        };
+
+        const renderAuthScreen = (isLogin = true) => {
+            document.getElementById('auth-screen').innerHTML = `
+                <div class="glass-card w-full max-w-sm p-8 space-y-6">
+                    <h2 class="text-2xl font-bold text-center">${isLogin ? 'အကောင့်ဝင်ပါ' : 'အကောင့်ဖွင့်ပါ'}</h2>
+                    <form onsubmit="event.preventDefault(); window.handleAuthSubmit(${isLogin})" class="space-y-4">
+                        ${!isLogin ? `<input type="text" id="username" required class="w-full p-4 rounded-2xl text-white" placeholder="အမည်">` : ''}
+                        <input type="email" id="email" required class="w-full p-4 rounded-2xl text-white" placeholder="Email">
+                        <input type="password" id="password" required class="w-full p-4 rounded-2xl text-white" placeholder="Password (အနည်းဆုံး ၆ လုံး)">
+                        <button type="submit" class="btn-gradient w-full py-4 rounded-2xl text-white font-bold">${isLogin ? 'ဝင်မည်' : 'ဖွင့်မည်'}</button>
+                    </form>
+                    <p class="text-center text-sm text-slate-400 cursor-pointer" onclick="renderAuthScreen(!${isLogin})">${isLogin ? 'အကောင့်မရှိသေးပါက ဤနေရာတွင်ဖွင့်ပါ' : 'အကောင့်ရှိပြီးသားဖြစ်ပါက ဝင်ရန်'}</p>
+                </div>`;
+        };
+
+        window.handleAuthSubmit = async (isLogin) => {
+            const email = document.getElementById('email').value; 
+            const password = document.getElementById('password').value;
+            document.getElementById('loading-overlay').classList.remove('hidden');
+            try {
+                if (isLogin) {
+                    await signInWithEmailAndPassword(auth, email, password);
+                    showMessage("အကောင့်ဝင်ခြင်း အောင်မြင်ပါသည်");
+                } else {
+                    const name = document.getElementById('username').value;
+                    const uc = await createUserWithEmailAndPassword(auth, email, password);
+                    await updateProfile(uc.user, { displayName: name });
+                    showMessage("အကောင့်ဖွင့်ခြင်း အောင်မြင်ပါသည်");
+                }
+            } catch (e) { 
+                showMessage("အချက်အလက် မှားယွင်းနေပါသည် (သို့မဟုတ်) Password အနည်းဆုံး ၆ လုံးရှိရပါမည်", 'error'); 
+            } finally {
+                document.getElementById('loading-overlay').classList.add('hidden');
+            }
+        };
+
+        const updateStaticText = () => {
+            const navContainer = document.getElementById('nav-container');
+            navContainer.innerHTML = `
+                <button onclick="showScreen('home')" class="nav-item flex flex-col items-center flex-1">
+                    <i class="fa-solid fa-house-chimney text-xl"></i><span class="text-[10px] mt-1">ပင်မ</span>
+                </button>
+                <button onclick="showScreen('transfer')" class="nav-item flex flex-col items-center flex-1">
+                    <i class="fa-solid fa-circle-plus text-2xl"></i><span class="text-[10px] mt-1">လွှဲမည်</span>
+                </button>
+                <button onclick="showScreen('inbox')" class="nav-item flex flex-col items-center flex-1 relative">
+                    <i class="fa-solid fa-message text-xl"></i><span id="inbox-badge" class="absolute top-0 right-1/4 w-2 h-2 bg-rose-500 rounded-full hidden"></span><span class="text-[10px] mt-1">အဝင်စာ</span>
+                </button>
+                <button onclick="showScreen('profile')" class="nav-item flex flex-col items-center flex-1">
+                    <i class="fa-solid fa-user-circle text-xl"></i><span class="text-[10px] mt-1">ကျွန်ုပ်</span>
+                </button>`;
+        };
+
+        const loadRates = () => {
+            onSnapshot(doc(db, PUBLIC_DATA_PATH, 'rates', 'current'), (ds) => {
+                if (ds.exists()) {
+                    const d = ds.data();
+                    currentRates = { 
+                        THB_TO_MMK: d.rateBuyMMK || 121.95, 
+                        rateHomeDeliveryTHB_THB_MMK: d.rateHomeDeliveryTHB_THB_MMK || 820, 
+                        rateHomeDeliveryTHB_MMK_THB: d.rateHomeDeliveryTHB_MMK_THB || 850, 
+                        lastUpdated: d.lastUpdated ? d.lastUpdated.toDate().toLocaleString('my-MM') : 'ယခုတင်' 
+                    };
+                    if (currentScreen === 'home') renderHome();
+                }
+            });
+        };
+
+        const loadAdminBankInfo = () => {
+            onSnapshot(doc(db, PUBLIC_DATA_PATH, 'config', 'bankInfo'), (ds) => {
+                if (ds.exists()) { adminBankInfo = { ...adminBankInfo, ...ds.data() }; if (currentScreen === 'home') renderHome(); }
+            });
+        };
+
+        const loadTransfers = () => {
+            onSnapshot(collection(db, PUBLIC_DATA_PATH, 'transfers'), (snapshot) => {
+                userTransfers = snapshot.docs.map(d => ({ id: d.id, ...d.data() })).filter(t => t.senderId === userId).sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+                if (currentScreen === 'profile') renderProfile();
+            });
+        };
+
+        const loadNotifications = () => {
+            onSnapshot(collection(db, `artifacts/${APP_ID}/users/${userId}`, 'notifications'), (snapshot) => {
+                userNotifications = snapshot.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+                document.getElementById('inbox-badge')?.classList.toggle('hidden', userNotifications.filter(n => !n.isRead).length === 0);
+                if (currentScreen === 'inbox') renderInbox();
+            });
+        };
+
+        const renderHome = () => {
+            const content = document.getElementById('content-area');
+            const rateBankBill = (100000 / currentRates.THB_TO_MMK).toFixed(2);
+            const rateHome = currentRates.rateHomeDeliveryTHB_THB_MMK;
+
+            content.innerHTML = `
+                <div class="space-y-6">
+                    <div class="flex justify-between items-end px-2">
+                        <div><h2 class="text-xl font-bold">ယနေ့ငွေလဲနှုန်း</h2><p class="text-xs text-slate-500">Update: ${currentRates.lastUpdated}</p></div>
+                        <div class="bg-emerald-500/10 text-emerald-400 text-[10px] px-2 py-1 rounded-lg border border-emerald-500/20 font-bold uppercase">Live</div>
+                    </div>
+                    <div class="grid gap-4">
+                        <!-- Rate 1: Bank & Phone Bill -->
+                        <div class="glass-card p-6 border-emerald-500/10">
+                            <h3 class="text-emerald-400 font-bold text-sm mb-4"><i class="fa-solid fa-wallet mr-2"></i> ဘဏ်ထဲသို့ငွေထည့်ရန်နှင့် ဖုန်းဘေဖြည့်ရန်</h3>
+                            <div class="flex items-center justify-between">
+                                <div class="text-center"><p class="text-[10px] text-slate-500 uppercase">ဘတ်</p><p class="text-2xl font-black">${rateBankBill}</p></div>
+                                <i class="fa-solid fa-arrow-right text-emerald-500"></i>
+                                <div class="text-center"><p class="text-[10px] text-slate-500 uppercase">ကျပ်</p><p class="text-2xl font-black">100,000</p></div>
+                            </div>
+                        </div>
+                        <!-- Rate 2: Home Delivery -->
+                        <div class="glass-card p-6 border-blue-500/10">
+                            <h3 class="text-blue-400 font-bold text-sm mb-4"><i class="fa-solid fa-house-chimney mr-2"></i> အိမ်သို့ငွေလွှဲရန်</h3>
+                            <div class="flex items-center justify-between">
+                                <div class="text-center"><p class="text-[10px] text-slate-500 uppercase">ဘတ်</p><p class="text-2xl font-black">${rateHome}</p></div>
+                                <i class="fa-solid fa-arrow-right text-blue-500"></i>
+                                <div class="text-center"><p class="text-[10px] text-slate-500 uppercase">ကျပ်</p><p class="text-2xl font-black">100,000</p></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <h3 class="text-sm font-bold text-slate-400 px-2 uppercase tracking-widest">MyanmarPay Accounts</h3>
+                        <div class="grid grid-cols-2 gap-3">
+                            ${[1,2,3,4].map(i => `<div class="glass-card p-2"><img src="${adminBankInfo[`image${i}URL`] || 'https://placehold.co/200x100?text=QR'}" class="w-full h-24 object-cover rounded-xl mb-2"><button onclick="window.downloadImg('${adminBankInfo[`image${i}URL`]}')" class="w-full py-2 bg-slate-800 text-xs rounded-lg">သိမ်းမည်</button></div>`).join('')}
+                        </div>
+                    </div>
+                </div>`;
+        };
+
+        const renderTransfer = () => {
+            const content = document.getElementById('content-area');
+            content.innerHTML = `
+                <div class="space-y-6">
+                    <div class="glass-card p-1 flex">
+                        <button onclick="setTransferTab('account')" class="flex-1 py-3 text-xs font-bold rounded-xl ${currentTransferTab === 'account' ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-400'}">BANK</button>
+                        <button onclick="setTransferTab('home')" class="flex-1 py-3 text-xs font-bold rounded-xl ${currentTransferTab === 'home' ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-400'}">HOME</button>
+                        <button onclick="setTransferTab('phone-bill')" class="flex-1 py-3 text-xs font-bold rounded-xl ${currentTransferTab === 'phone-bill' ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-400'}">BILL</button>
+                    </div>
+                    <div class="glass-card p-6">
+                        <form id="transfer-form" onsubmit="event.preventDefault(); window.submitTransfer('${currentTransferTab}')" class="space-y-5">
+                            <h2 class="text-lg font-bold text-white mb-2">${currentTransferTab === 'account' ? 'ဘဏ်ထဲသို့ လွှဲမည်' : currentTransferTab === 'phone-bill' ? 'ဖုန်းဘေထည့်မည်' : 'အိမ်အရောက်ပို့မည်'}</h2>
+                            <div id="dynamic-fields" class="space-y-4"></div>
+                            <button type="submit" class="btn-gradient w-full py-4 rounded-2xl text-white font-bold shadow-xl">ငွေလွှဲတောင်းဆိုမည်</button>
+                        </form>
+                    </div>
+                </div>`;
+            updateTransferFields();
+        };
+
+        const updateTransferFields = () => {
+            const container = document.getElementById('dynamic-fields'); let html = '';
+            if (currentTransferTab === 'account') {
+                html += `
+                    <div class="grid grid-cols-2 gap-3">
+                        <div onclick="window.selectPayment('WavePay', this)" class="payment-option p-4 glass-card border-white/5 flex flex-col items-center cursor-pointer">
+                            <img src="${adminBankInfo.wavePayURL || 'https://placehold.co/40x40?text=WP'}" class="w-10 h-10 rounded-lg mb-2"><span class="text-[10px] font-bold">WavePay</span>
+                        </div>
+                        <div onclick="window.selectPayment('KPay', this)" class="payment-option p-4 glass-card border-white/5 flex flex-col items-center cursor-pointer">
+                            <img src="${adminBankInfo.kpayURL || 'https://placehold.co/40x40?text=KP'}" class="w-10 h-10 rounded-lg mb-2"><span class="text-[10px] font-bold">KPay</span>
+                        </div>
+                    </div>
+                    <input type="hidden" id="transferAccountType" required>
+                    <input type="text" id="senderName" placeholder="လွှဲသူအမည်" class="w-full p-4 rounded-2xl" required>
+                    <input type="text" id="receiverName" placeholder="လက်ခံသူအမည်" class="w-full p-4 rounded-2xl" required>
+                    <input type="tel" id="senderPhoneTH" placeholder="ထိုင်းဖုန်းနံပါတ်" class="w-full p-4 rounded-2xl" required>
+                    <input type="tel" id="receiverPhoneMM" placeholder="မြန်မာဖုန်းနံပါတ်" class="w-full p-4 rounded-2xl" required>
+                    <div class="space-y-2"><label class="text-[10px] font-bold text-slate-500 ml-2 uppercase">လက်ခံသူ၏ဘဏ် QR</label><input type="file" id="bankQrFile" accept="image/*" class="w-full p-2 text-xs text-slate-400" required></div>`;
+            } else if (currentTransferTab === 'phone-bill') {
+                html += `
+                    <div class="grid grid-cols-4 gap-2">
+                        ${['ATOM', 'MPT', 'Mytel', 'U9'].map(net => `
+                            <div onclick="window.selectSIM('${net}', this)" class="phone-bill-option p-2 glass-card border-white/5 flex flex-col items-center cursor-pointer">
+                                <img src="${adminBankInfo[net.toLowerCase()+'URL'] || 'https://placehold.co/32x32?text='+net[0]}" class="w-8 h-8 rounded-md mb-1">
+                                <span class="text-[8px] font-bold">${net}</span>
+                            </div>`).join('')}
+                    </div>
+                    <input type="hidden" id="phoneBillType" required>
+                    <input type="tel" id="phoneBillNumber" placeholder="ဘေထည့်မည့် ဖုန်းနံပါတ်" class="w-full p-4 rounded-2xl" required>`;
+            } else {
+                html += `<input type="text" id="senderName" placeholder="လွှဲသူအမည်" class="w-full p-4 rounded-2xl" required><input type="text" id="receiverName" placeholder="လက်ခံသူအမည်" class="w-full p-4 rounded-2xl" required><textarea id="deliveryAddress" placeholder="အိမ်လိပ်စာ အပြည့်အစုံ" class="w-full p-4 rounded-2xl" rows="3" required></textarea>`;
+            }
+            html += `<div class="relative"><input type="number" id="amountInput" placeholder="ပမာဏထည့်ပါ" class="w-full p-4 pr-16 rounded-2xl font-bold" required><select id="amountDirection" class="absolute right-2 top-2 bottom-2 bg-slate-800 text-xs rounded-xl border-none"><option value="THB_MMK">THB</option><option value="MMK_THB" ${currentTransferTab !== 'home' ? 'disabled' : ''}>MMK</option></select></div><div class="space-y-2"><label class="text-[10px] font-bold text-slate-500 ml-2 uppercase">ငွေလွှဲစလစ် (Receipt)</label><input type="file" id="receiptFile" accept="image/*" class="w-full p-2 text-xs text-slate-400" required></div>`;
+            container.innerHTML = html;
+        };
+
+        const renderInbox = () => {
+            const content = document.getElementById('content-area');
+            content.innerHTML = `<div class="space-y-4"><h2 class="text-xl font-bold px-2">အဝင်စာ (Inbox)</h2>${userNotifications.length === 0 ? `<div class="text-center py-20 text-slate-500">မက်ဆေ့ခ်ျမရှိသေးပါ</div>` : userNotifications.map(n => `<div onclick="window.markRead('${n.id}')" class="glass-card p-5 relative overflow-hidden ${n.isRead ? 'opacity-60' : 'border-emerald-500/30'}">${!n.isRead ? '<div class="absolute top-0 right-0 w-2 h-2 bg-emerald-500 rounded-full m-3"></div>' : ''}<h4 class="font-bold text-sm mb-1">${n.title}</h4><p class="text-slate-400 text-xs">${n.message}</p>${n.imageURL ? `<img src="${n.imageURL}" class="mt-3 rounded-xl max-h-40 w-full object-cover">` : ''}</div>`).join('')}</div>`;
+        };
+
+        const renderProfile = () => {
+            const content = document.getElementById('content-area');
+            const user = auth.currentUser;
+            content.innerHTML = `
+                <div class="space-y-6">
+                    <div class="glass-card p-8 text-center relative overflow-hidden">
+                        <div class="w-20 h-20 bg-slate-800 rounded-3xl mx-auto flex items-center justify-center mb-4 border border-white/5 shadow-2xl"><i class="fa-solid fa-user text-3xl text-slate-600"></i></div>
+                        <h2 class="text-xl font-bold">${user.displayName || 'User'}</h2>
+                        <div class="mt-4 space-y-2 text-left bg-slate-900/40 p-4 rounded-2xl text-xs text-slate-400">
+                            <p><span class="text-slate-500">Email:</span> ${user.email}</p>
+                            <p><span class="text-slate-500">User ID:</span> ${userId}</p>
+                            <p><span class="text-slate-500">Created:</span> ${user.metadata.creationTime}</p>
+                            <p><span class="text-slate-500">Last Login:</span> ${user.metadata.lastSignInTime}</p>
+                        </div>
+                        <button onclick="window.handleLogout()" class="mt-6 px-8 py-2 bg-rose-500/10 text-rose-500 text-xs font-bold rounded-full border border-rose-500/20">LOGOUT</button>
+                    </div>
+                    <div class="space-y-4"><h3 class="text-sm font-bold text-slate-400 px-2 uppercase tracking-widest">ငွေလွှဲမှုမှတ်တမ်း</h3>${userTransfers.map(t => `<div class="glass-card p-4 flex items-center justify-between border-white/5"><div><p class="text-xs font-bold">${t.amountTHB.toFixed(2)} THB ➜ ${t.amountMMK.toFixed(0)} MMK</p><p class="text-[10px] text-slate-500">${t.timestamp?.toDate().toLocaleDateString()}</p></div><span class="text-[8px] px-2 py-1 rounded-full font-black ${t.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}">${t.status.toUpperCase()}</span></div>`).join('')}</div>
+                </div>`;
+        };
+
+        const showScreen = (name) => {
+            if (!isAuthReady) return; currentScreen = name;
+            document.querySelectorAll('.nav-item').forEach(el => {
+                if (el.getAttribute('onclick')?.includes(`'${name}'`)) el.classList.add('active');
+                else el.classList.remove('active');
+            });
+            if (name === 'home') renderHome(); else if (name === 'transfer') renderTransfer(); else if (name === 'inbox') renderInbox(); else if (name === 'profile') renderProfile();
+        };
+
+        // Global functions
+        window.setTransferTab = (tab) => { currentTransferTab = tab; renderTransfer(); };
+        window.selectPayment = (method, el) => {
+            document.getElementById('transferAccountType').value = method;
+            document.querySelectorAll('.payment-option').forEach(x => x.classList.remove('selected'));
+            el.classList.add('selected');
+        };
+        window.selectSIM = (type, el) => {
+            document.getElementById('phoneBillType').value = type;
+            document.querySelectorAll('.phone-bill-option').forEach(x => x.classList.remove('selected'));
+            el.classList.add('selected');
+        };
+        window.showScreen = showScreen;
+        window.downloadImg = (url) => { if(url) window.open(url, '_blank'); };
+        window.handleLogout = async () => {
+            document.getElementById('loading-overlay').classList.remove('hidden');
+            try {
+                await signOut(auth);
+                showMessage("အောင်မြင်စွာ ထွက်ပြီးပါပြီ");
+            } catch (e) {
+                showMessage("Logout လုပ်၍မရပါ", "error");
+            } finally {
+                document.getElementById('loading-overlay').classList.add('hidden');
+            }
+        };
+
+        window.submitTransfer = async (type) => {
+            const receipt = document.getElementById('receiptFile').files[0];
+            const amount = parseFloat(document.getElementById('amountInput').value);
+            if (!receipt || isNaN(amount) || amount <= 0) return showMessage('အချက်အလက်အပြည့်အစုံ ဖြည့်ပါ', 'error');
+            
+            document.getElementById('loading-overlay').classList.remove('hidden');
+            try {
+                const receiptUrl = await uploadToCloudinary(receipt);
+                let bankQrUrl = 'N/A';
+                if (type === 'account') {
+                    const qrFile = document.getElementById('bankQrFile').files[0];
+                    if (qrFile) bankQrUrl = await uploadToCloudinary(qrFile);
+                    if (!document.getElementById('transferAccountType').value) throw new Error("အကောင့်အမျိုးအစားရွေးပါ");
+                }
+                if (type === 'phone-bill' && !document.getElementById('phoneBillType').value) throw new Error("SIM အမျိုးအစားရွေးပါ");
+
+                const dir = document.getElementById('amountDirection').value;
+                let thb, mmk;
+                if (dir === 'THB_MMK') {
+                    thb = amount;
+                    // Fix: Bank & Phone Bill use same rate, Home Delivery uses different rate
+                    const rate = (type === 'home') ? (100000 / currentRates.rateHomeDeliveryTHB_THB_MMK) : currentRates.THB_TO_MMK;
+                    mmk = amount * rate;
+                } else {
+                    mmk = amount; thb = amount / (100000 / currentRates.rateHomeDeliveryTHB_MMK_THB);
+                }
+
+                const data = {
+                    senderId: userId, senderEmail: userEmail, amountTHB: thb, amountMMK: mmk, transferType: type,
+                    receiptImageURL: receiptUrl, bankQrImageURL: bankQrUrl, status: 'Pending', timestamp: serverTimestamp(),
+                    senderName: document.getElementById('senderName')?.value || 'N/A',
+                    receiverName: document.getElementById('receiverName')?.value || 'N/A',
+                    phoneBillType: document.getElementById('phoneBillType')?.value || 'N/A',
+                    phoneBillNumber: document.getElementById('phoneBillNumber')?.value || 'N/A',
+                    deliveryAddress: document.getElementById('deliveryAddress')?.value || 'N/A'
+                };
+                await setDoc(doc(collection(db, PUBLIC_DATA_PATH, 'transfers')), data);
+                showMessage('ငွေလွှဲတောင်းဆိုမှု အောင်မြင်ပါသည်'); showScreen('home');
+            } catch (e) { showMessage(e.message || 'အမှားရှိပါသည်', 'error'); } 
+            finally { document.getElementById('loading-overlay').classList.add('hidden'); }
+        };
+        window.markRead = async (id) => { await updateDoc(doc(db, `artifacts/${APP_ID}/users/${userId}`, 'notifications', id), { isRead: true }); };
+
+        initFirebase();
+    </script>
+</body>
+</html>
