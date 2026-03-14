@@ -22,6 +22,7 @@
             color: #f1f5f9;
             background-image: radial-gradient(circle at top right, #1e293b, #0f172a);
             min-height: 100vh;
+            overflow: hidden;
         }
 
         .glass-card {
@@ -62,9 +63,10 @@
         input:focus { border-color: var(--primary) !important; outline: none; }
 
         .scrollable-content {
-            height: calc(100vh - 100px);
+            height: calc(100vh - 80px); /* Bottom Nav အတွက်ပဲ နေရာချန်ပါသည် */
             overflow-y: auto;
             scrollbar-width: none;
+            padding-top: 20px; /* အပေါ်က Header မရှိတော့သဖြင့် Padding လေးထည့်ပေးထားပါသည် */
         }
 
         .scrollable-content::-webkit-scrollbar { display: none; }
@@ -93,7 +95,7 @@
     <!-- Image Lightbox Modal -->
     <div id="img-modal" onclick="this.style.display='none'">
         <img id="modal-img" src="" class="max-w-full max-h-full rounded-lg shadow-2xl">
-        <p class="absolute bottom-10 text-white/50 text-sm">ပိတ်ရန် ပုံကို ပြန်နှိပ်ပါ</p>
+        <p class="absolute bottom-10 text-white/50 text-sm italic">ပိတ်ရန် ပုံကို တစ်ချက်နှိပ်ပါ</p>
     </div>
 
     <div id="loading-overlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] flex items-center justify-center hidden">
@@ -108,14 +110,9 @@
     <!-- Auth Screen -->
     <div id="auth-screen" class="min-h-screen flex items-center justify-center p-6"></div>
     
-    <!-- Main App Content -->
+    <!-- Main App Content (Actionbar မပါတော့ပါ) -->
     <div id="app-content-wrapper" class="max-w-xl mx-auto min-h-screen flex flex-col hidden relative">
-        <header id="app-header" class="px-6 py-6 flex flex-col items-center">
-            <!-- အပေါ်ခေါင်းစဉ်စာသားများကို ဖယ်ရှားလိုက်ပါသည် -->
-            <div class="w-12 h-1 bg-emerald-500/20 rounded-full"></div>
-        </header>
-
-        <main id="content-area" class="flex-grow px-4 pb-28 scrollable-content"></main>
+        <main id="content-area" class="flex-grow px-4 pb-24 scrollable-content"></main>
 
         <nav id="nav-footer" class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-md glass-card border-white/10 p-2 shadow-2xl z-40">
             <div class="flex justify-around items-center h-14" id="nav-container"></div>
@@ -190,6 +187,7 @@
                         loadAdminBankInfo();
                         loadTransfers();
                         loadNotifications();
+                        // အချက်အလက်များစတင် load ပြီးနောက် Home ကို တန်းပြရန်
                         setTimeout(() => showScreen('home'), 100);
                     }
                 } else {
@@ -243,19 +241,20 @@
             const navContainer = document.getElementById('nav-container');
             navContainer.innerHTML = `
                 <button id="nav-home" onclick="showScreen('home')" class="nav-item flex flex-col items-center flex-1">
-                    <i class="fa-solid fa-house-chimney text-xl"></i><span class="text-[10px] mt-1">ပင်မ</span>
+                    <i class="fa-solid fa-house-chimney text-xl"></i><span class="text-[10px] mt-1 font-medium">ပင်မ</span>
                 </button>
                 <button id="nav-transfer" onclick="showScreen('transfer')" class="nav-item flex flex-col items-center flex-1">
-                    <i class="fa-solid fa-circle-plus text-2xl"></i><span class="text-[10px] mt-1">လွှဲမည်</span>
+                    <i class="fa-solid fa-circle-plus text-2xl"></i><span class="text-[10px] mt-1 font-medium">လွှဲမည်</span>
                 </button>
                 <button id="nav-inbox" onclick="showScreen('inbox')" class="nav-item flex flex-col items-center flex-1 relative">
-                    <i class="fa-solid fa-bell text-xl"></i><span id="inbox-badge" class="absolute top-0 right-1/4 w-2 h-2 bg-rose-500 rounded-full hidden"></span><span class="text-[10px] mt-1">အဝင်စာ</span>
+                    <i class="fa-solid fa-bell text-xl"></i><span id="inbox-badge" class="absolute top-0 right-1/4 w-2 h-2 bg-rose-500 rounded-full hidden"></span><span class="text-[10px] mt-1 font-medium">အဝင်စာ</span>
                 </button>
                 <button id="nav-profile" onclick="showScreen('profile')" class="nav-item flex flex-col items-center flex-1">
-                    <i class="fa-solid fa-circle-user text-xl"></i><span class="text-[10px] mt-1">ကျွန်ုပ်</span>
+                    <i class="fa-solid fa-circle-user text-xl"></i><span class="text-[10px] mt-1 font-medium">ကျွန်ုပ်</span>
                 </button>`;
         };
 
+        const PUBLIC_DATA_PATH = `artifacts/${APP_ID}/public/data`;
         const loadRates = () => { onSnapshot(doc(db, PUBLIC_DATA_PATH, 'rates', 'current'), (ds) => { if (ds.exists()) { const d = ds.data(); currentRates = { THB_TO_MMK: d.rateBuyMMK || 121.95, rateHomeDeliveryTHB_THB_MMK: d.rateHomeDeliveryTHB_THB_MMK || 820, rateHomeDeliveryTHB_MMK_THB: d.rateHomeDeliveryTHB_MMK_THB || 850, lastUpdated: d.lastUpdated ? d.lastUpdated.toDate().toLocaleString('my-MM') : 'ယခုတင်' }; if (currentScreen === 'home') renderHome(); } }); };
         const loadAdminBankInfo = () => { onSnapshot(doc(db, PUBLIC_DATA_PATH, 'config', 'bankInfo'), (ds) => { if (ds.exists()) { adminBankInfo = { ...adminBankInfo, ...ds.data() }; if (currentScreen === 'home') renderHome(); } }); };
         const loadTransfers = () => { onSnapshot(collection(db, PUBLIC_DATA_PATH, 'transfers'), (snapshot) => { userTransfers = snapshot.docs.map(d => ({ id: d.id, ...d.data() })).filter(t => t.senderId === userId).sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)); if (currentScreen === 'profile') renderProfile(); }); };
@@ -272,15 +271,29 @@
                         <div class="bg-emerald-500/10 text-emerald-400 text-[10px] px-2 py-1 rounded-lg border border-emerald-500/20 font-bold uppercase tracking-wider">Live</div>
                     </div>
                     <div class="grid gap-4">
-                        <div class="glass-card p-6 border-emerald-500/10"><h3 class="text-emerald-400 font-bold text-sm mb-4"><i class="fa-solid fa-building-columns mr-2"></i> ဘဏ်ထဲသို့ငွေထည့်ရန်နှင့် ဖုန်းဘေ</h3><div class="flex items-center justify-between"><div class="text-center"><p class="text-[10px] text-slate-500 uppercase">ဘတ်</p><p class="text-2xl font-black">${rateBankBill}</p></div><i class="fa-solid fa-arrow-right text-emerald-500"></i><div class="text-center"><p class="text-[10px] text-slate-500 uppercase">ကျပ်</p><p class="text-2xl font-black">100,000</p></div></div></div>
-                        <div class="glass-card p-6 border-blue-500/10"><h3 class="text-blue-400 font-bold text-sm mb-4"><i class="fa-solid fa-house-chimney mr-2"></i> အိမ်သို့ငွေလွှဲရန်</h3><div class="flex items-center justify-between"><div class="text-center"><p class="text-[10px] text-slate-500 uppercase">ဘတ်</p><p class="text-2xl font-black">${rateHome}</p></div><i class="fa-solid fa-arrow-right text-blue-500"></i><div class="text-center"><p class="text-[10px] text-slate-500 uppercase">ကျပ်</p><p class="text-2xl font-black">100,000</p></div></div></div>
+                        <div class="glass-card p-6 border-emerald-500/10">
+                            <h3 class="text-emerald-400 font-bold text-sm mb-4"><i class="fa-solid fa-wallet mr-2"></i> ဘဏ်ထဲသို့ငွေထည့်ရန်နှင့် ဖုန်းဘေ</h3>
+                            <div class="flex items-center justify-between">
+                                <div class="text-center"><p class="text-[10px] text-slate-500 uppercase">ဘတ်</p><p class="text-2xl font-black">${rateBankBill}</p></div>
+                                <i class="fa-solid fa-arrow-right text-emerald-500"></i>
+                                <div class="text-center"><p class="text-[10px] text-slate-500 uppercase">ကျပ်</p><p class="text-2xl font-black">100,000</p></div>
+                            </div>
+                        </div>
+                        <div class="glass-card p-6 border-blue-500/10">
+                            <h3 class="text-blue-400 font-bold text-sm mb-4"><i class="fa-solid fa-house-chimney mr-2"></i> အိမ်သို့ငွေလွှဲရန်</h3>
+                            <div class="flex items-center justify-between">
+                                <div class="text-center"><p class="text-[10px] text-slate-500 uppercase">ဘတ်</p><p class="text-2xl font-black">${rateHome}</p></div>
+                                <i class="fa-solid fa-arrow-right text-blue-500"></i>
+                                <div class="text-center"><p class="text-[10px] text-slate-500 uppercase">ကျပ်</p><p class="text-2xl font-black">100,000</p></div>
+                            </div>
+                        </div>
                     </div>
                     <div class="space-y-4">
                         <h3 class="text-sm font-bold text-slate-400 px-2 uppercase tracking-widest">MyanmarPay Accounts</h3>
                         <div class="grid grid-cols-2 gap-3">
                             ${[1,2,3,4].map(i => `<div class="glass-card p-2"><img src="${adminBankInfo[`image${i}URL`] || 'https://placehold.co/200x100?text=QR'}" onclick="window.viewFullImage(this.src)" class="w-full h-24 object-cover rounded-xl mb-2 cursor-pointer shadow-lg hover:scale-[1.02] transition-transform"></div>`).join('')}
                         </div>
-                        <p class="text-[10px] text-center text-slate-500">ပုံများကို Full-screen ဖြင့်ကြည့်ရန် ပုံပေါ်တွင် နှိပ်ပါ</p>
+                        <p class="text-[10px] text-center text-slate-500 italic">ပုံများကို Full-screen ဖြင့်ကြည့်ရန် ပုံပေါ်တွင် နှိပ်ပါ</p>
                     </div>
                 </div>`;
         };
@@ -364,19 +377,17 @@
                         </div>
                         <h2 class="text-2xl font-bold text-white">${user.displayName || 'WaiYan User'}</h2>
                         <p class="text-slate-500 text-xs mb-6">${user.email}</p>
-                        
                         <div class="grid grid-cols-2 gap-4 w-full">
                             <div class="bg-slate-900/60 p-4 rounded-2xl text-center border border-white/5">
-                                <p class="text-[10px] text-slate-500 uppercase font-black">ငွေလွှဲမှုစုစုပေါင်း</p>
+                                <p class="text-[10px] text-slate-500 uppercase font-black">စုစုပေါင်း</p>
                                 <p class="text-xl font-bold text-emerald-400">${userTransfers.length}</p>
                             </div>
                             <div class="bg-slate-900/60 p-4 rounded-2xl text-center border border-white/5">
-                                <p class="text-[10px] text-slate-500 uppercase font-black">အောင်မြင်မှု</p>
+                                <p class="text-[10px] text-slate-500 uppercase font-black">အောင်မြင်</p>
                                 <p class="text-xl font-bold text-blue-400">${completedCount}</p>
                             </div>
                         </div>
                     </div>
-
                     <div class="glass-card p-6 space-y-4">
                         <div class="flex items-center space-x-4">
                             <div class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center"><i class="fa-solid fa-id-card text-emerald-500/50"></i></div>
@@ -384,15 +395,13 @@
                         </div>
                         <div class="flex items-center space-x-4">
                             <div class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center"><i class="fa-solid fa-clock text-emerald-500/50"></i></div>
-                            <div><p class="text-[10px] text-slate-500 uppercase">ဝင်ရောက်ခဲ့သည့်အချိန်</p><p class="text-[11px] font-medium text-white/80">${new Date(user.metadata.lastSignInTime).toLocaleString()}</p></div>
+                            <div><p class="text-[10px] text-slate-500 uppercase">Join Date</p><p class="text-[11px] font-medium text-white/80">${new Date(user.metadata.creationTime).toLocaleString()}</p></div>
                         </div>
                     </div>
-
                     <button onclick="window.handleLogout()" class="w-full py-4 glass-card border-rose-500/20 text-rose-500 font-bold text-xs hover:bg-rose-600 hover:text-white transition-all shadow-lg">အကောင့်မှ ထွက်မည်</button>
-                    
                     <div class="space-y-4 pt-2">
                         <h3 class="text-xs font-bold text-slate-400 px-2 uppercase tracking-widest">ငွေလွှဲမှုမှတ်တမ်း</h3>
-                        ${userTransfers.map(t => `<div class="glass-card p-4 flex items-center justify-between border-white/5"><div><p class="text-xs font-bold">${t.amountTHB.toFixed(2)} THB ➜ ${t.amountMMK.toFixed(0)} MMK</p><p class="text-[10px] text-slate-500">${t.timestamp?.toDate().toLocaleDateString()}</p></div><span class="text-[8px] px-2 py-1 rounded-full font-black ${t.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}">${t.status.toUpperCase()}</span></div>`).join('')}
+                        ${userTransfers.map(t => `<div class="glass-card p-4 flex items-center justify-between border-white/5"><div><p class="text-xs font-bold">${t.amountTHB.toFixed(2)} THB ➜ ${t.amountMMK.toFixed(0)} MMK</p><p class="text-[10px] text-slate-500">${t.timestamp?.toDate().toLocaleDateString()}</p></div><span class="text-[8px] px-2 py-1 rounded-full font-black ${t.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-500'}">${t.status.toUpperCase()}</span></div>`).join('')}
                     </div>
                 </div>`;
         };
@@ -407,6 +416,7 @@
             if (name === 'home') renderHome(); else if (name === 'transfer') renderTransfer(); else if (name === 'inbox') renderInbox(); else if (name === 'profile') renderProfile();
         };
 
+        // Global functions
         window.setTransferTab = (tab) => { currentTransferTab = tab; renderTransfer(); };
         window.selectPayment = (method, el) => {
             document.getElementById('transferAccountType').value = method;
@@ -425,15 +435,11 @@
             const receipt = document.getElementById('receiptFile').files[0];
             const amountInput = document.getElementById('amountInput');
             const amountValue = parseFloat(amountInput.value);
-            
             if (!receipt || isNaN(amountValue) || amountValue <= 0) return showMessage('အချက်အလက်အပြည့်အစုံ ဖြည့်ပါ', 'error');
-            
             document.getElementById('loading-overlay').classList.remove('hidden');
             try {
                 const receiptUrl = await uploadToCloudinary(receipt);
                 let bankQrUrl = 'N/A';
-                
-                // Fields for Admin
                 const senderName = document.getElementById('senderName')?.value || 'N/A';
                 const receiverName = document.getElementById('receiverName')?.value || 'N/A';
                 const senderPhoneTH = document.getElementById('senderPhoneTH')?.value || 'N/A';
@@ -467,7 +473,6 @@
                     senderName, receiverName, senderPhoneTH, receiverPhoneMM,
                     phoneBillType, phoneBillNumber, deliveryAddress, transferAccountType
                 };
-                
                 await setDoc(doc(collection(db, PUBLIC_DATA_PATH, 'transfers')), data);
                 showMessage('ငွေလွှဲတောင်းဆိုမှု အောင်မြင်ပါသည်'); showScreen('home');
             } catch (e) { showMessage(e.message || 'အမှားရှိပါသည်', 'error'); } 
