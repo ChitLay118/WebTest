@@ -52,19 +52,14 @@
             transform: translateY(-3px);
         }
 
-        .nav-item.active i {
-            color: var(--primary) !important;
-        }
+        .nav-item.active i { color: var(--primary) !important; }
 
         input, select, textarea {
             background: rgba(15, 23, 42, 0.6) !important;
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
         }
 
-        input:focus {
-            border-color: var(--primary) !important;
-            outline: none;
-        }
+        input:focus { border-color: var(--primary) !important; outline: none; }
 
         .scrollable-content {
             height: calc(100vh - 100px);
@@ -80,17 +75,31 @@
             box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
         }
 
-        .profile-icon-bg {
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 96, 105, 0.2) 100%);
+        /* Fullscreen Image Modal */
+        #img-modal {
+            display: none;
+            position: fixed;
+            z-index: 200;
+            inset: 0;
+            background: rgba(0,0,0,0.95);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
         }
     </style>
 </head>
 <body>
 
+    <!-- Image Lightbox Modal -->
+    <div id="img-modal" onclick="this.style.display='none'">
+        <img id="modal-img" src="" class="max-w-full max-h-full rounded-lg shadow-2xl">
+        <p class="absolute bottom-10 text-white/50 text-sm">ပိတ်ရန် ပုံကို ပြန်နှိပ်ပါ</p>
+    </div>
+
     <div id="loading-overlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] flex items-center justify-center hidden">
         <div class="flex flex-col items-center">
             <div class="relative w-16 h-16 border-4 border-emerald-500/20 rounded-full border-t-emerald-500 animate-spin"></div>
-            <p class="mt-4 text-emerald-400 font-medium">ခဏေစာင့္ေပးပါ...</p>
+            <p class="mt-4 text-emerald-400 font-medium">ခဏစောင့်ပေးပါ...</p>
         </div>
     </div>
     
@@ -101,9 +110,9 @@
     
     <!-- Main App Content -->
     <div id="app-content-wrapper" class="max-w-xl mx-auto min-h-screen flex flex-col hidden relative">
-        <header id="app-header" class="px-6 py-4 flex flex-col items-center">
-            <!-- Icon ႏွင့္ စာသားမ်ားကို ဖယ္ရွားလိုက္ပါသည္ -->
-            <div id="user-info" class="text-[10px] px-4 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-emerald-400 font-medium tracking-wider">Loading User...</div>
+        <header id="app-header" class="px-6 py-6 flex flex-col items-center">
+            <!-- အပေါ်ခေါင်းစဉ်စာသားများကို ဖယ်ရှားလိုက်ပါသည် -->
+            <div class="w-12 h-1 bg-emerald-500/20 rounded-full"></div>
         </header>
 
         <main id="content-area" class="flex-grow px-4 pb-28 scrollable-content"></main>
@@ -137,9 +146,16 @@
         let adminBankInfo = { image1URL: '', image2URL: '', image3URL: '', image4URL: '', wavePayURL: '', kpayURL: '', atomURL: '', mptURL: '', mytelURL: '', u9URL: '' };
         let userTransfers = [], userNotifications = [];
 
+        window.viewFullImage = (url) => {
+            if(!url) return;
+            const modal = document.getElementById('img-modal');
+            const img = document.getElementById('modal-img');
+            img.src = url;
+            modal.style.display = 'flex';
+        };
+
         const showMessage = (msg, type = 'success') => {
             const box = document.getElementById('message-box');
-            if(!box) return;
             const bgColor = type === 'success' ? 'from-emerald-600 to-teal-700' : 'from-rose-600 to-red-700';
             box.innerHTML = `<div class="bg-gradient-to-r ${bgColor} text-white p-4 rounded-2xl shadow-2xl flex items-center space-x-3 border border-white/20"><i class="fa-solid fa-circle-info"></i><p class="font-medium text-sm">${msg}</p></div>`;
             box.classList.remove('translate-y-[-150%]'); box.classList.add('translate-y-0');
@@ -164,7 +180,6 @@
                 if (user) {
                     userId = user.uid;
                     userEmail = user.email;
-                    document.getElementById('user-info').textContent = `@${user.displayName || user.email.split('@')[0]}`;
                     document.getElementById('auth-screen').classList.add('hidden');
                     document.getElementById('app-content-wrapper').classList.remove('hidden');
                     
@@ -188,23 +203,20 @@
 
         const renderAuthScreen = (isLogin = true) => {
             const container = document.getElementById('auth-screen');
-            if(!container) return;
             container.innerHTML = `
                 <div class="glass-card w-full max-w-sm p-8 space-y-6">
-                    <div class="text-center space-y-2">
-                        <div class="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-500/20">
-                            <i class="fa-solid fa-user-shield text-3xl text-emerald-500"></i>
-                        </div>
-                        <h2 class="text-2xl font-bold">${isLogin ? 'အေကာင့္ဝင္ပါ' : 'အေကာင့္ဖြင့္ပါ'}</h2>
+                    <div class="text-center">
+                        <i class="fa-solid fa-shield-halved text-4xl text-emerald-500 mb-2"></i>
+                        <h2 class="text-2xl font-bold">${isLogin ? 'အကောင့်ဝင်ပါ' : 'အကောင့်ဖွင့်ပါ'}</h2>
                     </div>
                     <form onsubmit="event.preventDefault(); window.handleAuthSubmit(${isLogin})" class="space-y-4">
-                        ${!isLogin ? `<input type="text" id="username" required class="w-full p-4 rounded-2xl text-white outline-none" placeholder="သင့္အမည္">` : ''}
+                        ${!isLogin ? `<input type="text" id="username" required class="w-full p-4 rounded-2xl text-white outline-none" placeholder="သင့်အမည်">` : ''}
                         <input type="email" id="email" required class="w-full p-4 rounded-2xl text-white outline-none" placeholder="Email">
-                        <input type="password" id="password" required class="w-full p-4 rounded-2xl text-white outline-none" placeholder="Password (အနည္းဆုံး ၆ လုံး)">
-                        <button type="submit" class="btn-gradient w-full py-4 rounded-2xl text-white font-bold shadow-lg">${isLogin ? 'ဝင္မည္' : 'အေကာင့္ဖြင့္မည္'}</button>
+                        <input type="password" id="password" required class="w-full p-4 rounded-2xl text-white outline-none" placeholder="Password (အနည်းဆုံး ၆ လုံး)">
+                        <button type="submit" class="btn-gradient w-full py-4 rounded-2xl text-white font-bold shadow-lg">${isLogin ? 'ဝင်မည်' : 'အကောင့်ဖွင့်မည်'}</button>
                     </form>
-                    <p class="text-center text-xs text-slate-400 cursor-pointer hover:text-emerald-400" onclick="window.toggleAuth(${!isLogin})">
-                        ${isLogin ? 'အေကာင့္မရွိေသးပါက ဤေနရာတြင္ဖြင့္ပါ' : 'အေကာင့္ရွိၿပီးသားျဖစ္ပါက ဝင္ရန္'}
+                    <p class="text-center text-xs text-slate-400 cursor-pointer" onclick="window.toggleAuth(${!isLogin})">
+                        ${isLogin ? 'အကောင့်မရှိသေးပါက ဤနေရာတွင် ဖွင့်ပါ' : 'အကောင့်ရှိပြီးသားဖြစ်ပါက ဝင်ရန်'}
                     </p>
                 </div>`;
         };
@@ -215,86 +227,78 @@
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             document.getElementById('loading-overlay').classList.remove('hidden');
-            
             try {
                 if (isLogin) {
                     await signInWithEmailAndPassword(auth, email, password);
                 } else {
                     const name = document.getElementById('username').value;
-                    if (password.length < 6) throw new Error("Password အနည္းဆုံး ၆ လုံးရွိရပါမည္");
                     const uc = await createUserWithEmailAndPassword(auth, email, password);
                     await updateProfile(uc.user, { displayName: name });
                 }
-            } catch (e) {
-                showMessage(e.message || "အခ်က္အလက္ မွားယြင္းေနပါသည္", 'error');
-            } finally {
-                document.getElementById('loading-overlay').classList.add('hidden');
-            }
+            } catch (e) { showMessage("အချက်အလက် မှားယွင်းနေပါသည်", 'error'); }
+            finally { document.getElementById('loading-overlay').classList.add('hidden'); }
         };
 
         const updateStaticText = () => {
             const navContainer = document.getElementById('nav-container');
-            if(!navContainer) return;
             navContainer.innerHTML = `
                 <button id="nav-home" onclick="showScreen('home')" class="nav-item flex flex-col items-center flex-1">
-                    <i class="fa-solid fa-house-chimney text-xl"></i><span class="text-[10px] mt-1 font-medium">ပင္မ</span>
+                    <i class="fa-solid fa-house-chimney text-xl"></i><span class="text-[10px] mt-1">ပင်မ</span>
                 </button>
                 <button id="nav-transfer" onclick="showScreen('transfer')" class="nav-item flex flex-col items-center flex-1">
-                    <i class="fa-solid fa-circle-plus text-2xl"></i><span class="text-[10px] mt-1 font-medium">လႊဲမည္</span>
+                    <i class="fa-solid fa-circle-plus text-2xl"></i><span class="text-[10px] mt-1">လွှဲမည်</span>
                 </button>
                 <button id="nav-inbox" onclick="showScreen('inbox')" class="nav-item flex flex-col items-center flex-1 relative">
-                    <i class="fa-solid fa-bell text-xl"></i><span id="inbox-badge" class="absolute top-0 right-1/4 w-2 h-2 bg-rose-500 rounded-full hidden"></span><span class="text-[10px] mt-1 font-medium">အဝင္စာ</span>
+                    <i class="fa-solid fa-bell text-xl"></i><span id="inbox-badge" class="absolute top-0 right-1/4 w-2 h-2 bg-rose-500 rounded-full hidden"></span><span class="text-[10px] mt-1">အဝင်စာ</span>
                 </button>
                 <button id="nav-profile" onclick="showScreen('profile')" class="nav-item flex flex-col items-center flex-1">
-                    <i class="fa-solid fa-circle-user text-xl"></i><span class="text-[10px] mt-1 font-medium">ကျွန်ုပ်</span>
+                    <i class="fa-solid fa-circle-user text-xl"></i><span class="text-[10px] mt-1">ကျွန်ုပ်</span>
                 </button>`;
         };
 
-        const PUBLIC_DATA_PATH = `artifacts/${APP_ID}/public/data`;
-        const loadRates = () => { onSnapshot(doc(db, PUBLIC_DATA_PATH, 'rates', 'current'), (ds) => { if (ds.exists()) { const d = ds.data(); currentRates = { THB_TO_MMK: d.rateBuyMMK || 121.95, rateHomeDeliveryTHB_THB_MMK: d.rateHomeDeliveryTHB_THB_MMK || 820, rateHomeDeliveryTHB_MMK_THB: d.rateHomeDeliveryTHB_MMK_THB || 850, lastUpdated: d.lastUpdated ? d.lastUpdated.toDate().toLocaleString('my-MM') : 'ယခုတင္' }; if (currentScreen === 'home') renderHome(); } }); };
+        const loadRates = () => { onSnapshot(doc(db, PUBLIC_DATA_PATH, 'rates', 'current'), (ds) => { if (ds.exists()) { const d = ds.data(); currentRates = { THB_TO_MMK: d.rateBuyMMK || 121.95, rateHomeDeliveryTHB_THB_MMK: d.rateHomeDeliveryTHB_THB_MMK || 820, rateHomeDeliveryTHB_MMK_THB: d.rateHomeDeliveryTHB_MMK_THB || 850, lastUpdated: d.lastUpdated ? d.lastUpdated.toDate().toLocaleString('my-MM') : 'ယခုတင်' }; if (currentScreen === 'home') renderHome(); } }); };
         const loadAdminBankInfo = () => { onSnapshot(doc(db, PUBLIC_DATA_PATH, 'config', 'bankInfo'), (ds) => { if (ds.exists()) { adminBankInfo = { ...adminBankInfo, ...ds.data() }; if (currentScreen === 'home') renderHome(); } }); };
         const loadTransfers = () => { onSnapshot(collection(db, PUBLIC_DATA_PATH, 'transfers'), (snapshot) => { userTransfers = snapshot.docs.map(d => ({ id: d.id, ...d.data() })).filter(t => t.senderId === userId).sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)); if (currentScreen === 'profile') renderProfile(); }); };
         const loadNotifications = () => { onSnapshot(collection(db, `artifacts/${APP_ID}/users/${userId}`, 'notifications'), (snapshot) => { userNotifications = snapshot.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)); const unread = userNotifications.filter(n => !n.isRead).length; if(document.getElementById('inbox-badge')) document.getElementById('inbox-badge').classList.toggle('hidden', unread === 0); if (currentScreen === 'inbox') renderInbox(); }); };
 
         const renderHome = () => {
             const content = document.getElementById('content-area');
-            if(!content) return;
             const rateBankBill = (100000 / currentRates.THB_TO_MMK).toFixed(2);
             const rateHome = currentRates.rateHomeDeliveryTHB_THB_MMK;
             content.innerHTML = `
                 <div class="space-y-6 animate-fadeIn">
                     <div class="flex justify-between items-end px-2">
-                        <div><h2 class="text-xl font-bold">ယေန႕ေငြလဲႏႈန္း</h2><p class="text-xs text-slate-500">Update: ${currentRates.lastUpdated}</p></div>
-                        <div class="bg-emerald-500/10 text-emerald-400 text-[10px] px-2 py-1 rounded-lg border border-emerald-500/20 font-bold uppercase">Live</div>
+                        <div><h2 class="text-xl font-bold">ယနေ့ငွေလဲနှုန်း</h2><p class="text-xs text-slate-500">Update: ${currentRates.lastUpdated}</p></div>
+                        <div class="bg-emerald-500/10 text-emerald-400 text-[10px] px-2 py-1 rounded-lg border border-emerald-500/20 font-bold uppercase tracking-wider">Live</div>
                     </div>
                     <div class="grid gap-4">
-                        <div class="glass-card p-6 border-emerald-500/10"><h3 class="text-emerald-400 font-bold text-sm mb-4"><i class="fa-solid fa-wallet mr-2"></i> ဘဏ္ထဲသို႔ေငြထည့္ရန္ႏွင့္ ဖုန္းေဘ</h3><div class="flex items-center justify-between"><div class="text-center"><p class="text-[10px] text-slate-500 uppercase">ဘတ္</p><p class="text-2xl font-black">${rateBankBill}</p></div><i class="fa-solid fa-arrow-right text-emerald-500"></i><div class="text-center"><p class="text-[10px] text-slate-500 uppercase">က်ပ္</p><p class="text-2xl font-black">100,000</p></div></div></div>
-                        <div class="glass-card p-6 border-blue-500/10"><h3 class="text-blue-400 font-bold text-sm mb-4"><i class="fa-solid fa-house-chimney mr-2"></i> အိမ္သို႔ေငြလႊဲရန္</h3><div class="flex items-center justify-between"><div class="text-center"><p class="text-[10px] text-slate-500 uppercase">ဘတ္</p><p class="text-2xl font-black">${rateHome}</p></div><i class="fa-solid fa-arrow-right text-blue-500"></i><div class="text-center"><p class="text-[10px] text-slate-500 uppercase">က်ပ္</p><p class="text-2xl font-black">100,000</p></div></div></div>
+                        <div class="glass-card p-6 border-emerald-500/10"><h3 class="text-emerald-400 font-bold text-sm mb-4"><i class="fa-solid fa-building-columns mr-2"></i> ဘဏ်ထဲသို့ငွေထည့်ရန်နှင့် ဖုန်းဘေ</h3><div class="flex items-center justify-between"><div class="text-center"><p class="text-[10px] text-slate-500 uppercase">ဘတ်</p><p class="text-2xl font-black">${rateBankBill}</p></div><i class="fa-solid fa-arrow-right text-emerald-500"></i><div class="text-center"><p class="text-[10px] text-slate-500 uppercase">ကျပ်</p><p class="text-2xl font-black">100,000</p></div></div></div>
+                        <div class="glass-card p-6 border-blue-500/10"><h3 class="text-blue-400 font-bold text-sm mb-4"><i class="fa-solid fa-house-chimney mr-2"></i> အိမ်သို့ငွေလွှဲရန်</h3><div class="flex items-center justify-between"><div class="text-center"><p class="text-[10px] text-slate-500 uppercase">ဘတ်</p><p class="text-2xl font-black">${rateHome}</p></div><i class="fa-solid fa-arrow-right text-blue-500"></i><div class="text-center"><p class="text-[10px] text-slate-500 uppercase">ကျပ်</p><p class="text-2xl font-black">100,000</p></div></div></div>
                     </div>
                     <div class="space-y-4">
                         <h3 class="text-sm font-bold text-slate-400 px-2 uppercase tracking-widest">MyanmarPay Accounts</h3>
                         <div class="grid grid-cols-2 gap-3">
-                            ${[1,2,3,4].map(i => `<div class="glass-card p-2"><img src="${adminBankInfo[`image${i}URL`] || 'https://placehold.co/200x100?text=QR'}" class="w-full h-24 object-cover rounded-xl mb-2"><button onclick="window.downloadImg('${adminBankInfo[`image${i}URL`]}')" class="w-full py-2 bg-slate-800 text-xs rounded-lg">သိမ္းမည္</button></div>`).join('')}
+                            ${[1,2,3,4].map(i => `<div class="glass-card p-2"><img src="${adminBankInfo[`image${i}URL`] || 'https://placehold.co/200x100?text=QR'}" onclick="window.viewFullImage(this.src)" class="w-full h-24 object-cover rounded-xl mb-2 cursor-pointer shadow-lg hover:scale-[1.02] transition-transform"></div>`).join('')}
                         </div>
+                        <p class="text-[10px] text-center text-slate-500">ပုံများကို Full-screen ဖြင့်ကြည့်ရန် ပုံပေါ်တွင် နှိပ်ပါ</p>
                     </div>
                 </div>`;
         };
 
         const renderTransfer = () => {
             const content = document.getElementById('content-area');
-            if(!content) return;
             content.innerHTML = `
                 <div class="space-y-6">
-                    <div class="glass-card p-1 flex">
-                        <button onclick="setTransferTab('account')" class="flex-1 py-3 text-xs font-bold rounded-xl ${currentTransferTab === 'account' ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-400'}">BANK</button>
-                        <button onclick="setTransferTab('home')" class="flex-1 py-3 text-xs font-bold rounded-xl ${currentTransferTab === 'home' ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-400'}">HOME</button>
-                        <button onclick="setTransferTab('phone-bill')" class="flex-1 py-3 text-xs font-bold rounded-xl ${currentTransferTab === 'phone-bill' ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-400'}">BILL</button>
+                    <div class="glass-card p-1 flex shadow-lg">
+                        <button onclick="setTransferTab('account')" class="flex-1 py-3 text-xs font-bold rounded-xl transition-all ${currentTransferTab === 'account' ? 'bg-emerald-500 text-white shadow-md' : 'text-slate-400'}">BANK</button>
+                        <button onclick="setTransferTab('home')" class="flex-1 py-3 text-xs font-bold rounded-xl transition-all ${currentTransferTab === 'home' ? 'bg-emerald-500 text-white shadow-md' : 'text-slate-400'}">HOME</button>
+                        <button onclick="setTransferTab('phone-bill')" class="flex-1 py-3 text-xs font-bold rounded-xl transition-all ${currentTransferTab === 'phone-bill' ? 'bg-emerald-500 text-white shadow-md' : 'text-slate-400'}">BILL</button>
                     </div>
-                    <div class="glass-card p-6">
+                    <div class="glass-card p-6 shadow-xl">
                         <form id="transfer-form" onsubmit="event.preventDefault(); window.submitTransfer('${currentTransferTab}')" class="space-y-5">
-                            <h2 class="text-lg font-bold text-white mb-2">${currentTransferTab === 'account' ? 'ဘဏ္ထဲသို႔ လႊဲမည္' : currentTransferTab === 'phone-bill' ? 'ဖုန္းေဘထည့္မည္' : 'အိမ္အေရာက္ပို႔မည္'}</h2>
+                            <h2 class="text-lg font-bold text-white mb-2">${currentTransferTab === 'account' ? 'ဘဏ်ထဲသို့ လွှဲမည်' : currentTransferTab === 'phone-bill' ? 'ဖုန်းဘေထည့်မည်' : 'အိမ်အရောက်ပို့မည်'}</h2>
                             <div id="dynamic-fields" class="space-y-4"></div>
-                            <button type="submit" class="btn-gradient w-full py-4 rounded-2xl text-white font-bold shadow-xl">ေငြလႊဲေတာင္းဆိုမည္</button>
+                            <button type="submit" class="btn-gradient w-full py-4 rounded-2xl text-white font-bold shadow-xl">ငွေလွှဲတောင်းဆိုမည်</button>
                         </form>
                     </div>
                 </div>`;
@@ -307,99 +311,89 @@
             if (currentTransferTab === 'account') {
                 html += `
                     <div class="grid grid-cols-2 gap-3">
-                        <div onclick="window.selectPayment('WavePay', this)" class="payment-option p-4 glass-card border-white/5 flex flex-col items-center cursor-pointer">
+                        <div onclick="window.selectPayment('WavePay', this)" class="payment-option p-4 glass-card border-white/5 flex flex-col items-center cursor-pointer hover:bg-white/5">
                             <img src="${adminBankInfo.wavePayURL || 'https://placehold.co/40x40?text=WP'}" class="w-10 h-10 rounded-lg mb-2"><span class="text-[10px] font-bold">WavePay</span>
                         </div>
-                        <div onclick="window.selectPayment('KPay', this)" class="payment-option p-4 glass-card border-white/5 flex flex-col items-center cursor-pointer">
+                        <div onclick="window.selectPayment('KPay', this)" class="payment-option p-4 glass-card border-white/5 flex flex-col items-center cursor-pointer hover:bg-white/5">
                             <img src="${adminBankInfo.kpayURL || 'https://placehold.co/40x40?text=KP'}" class="w-10 h-10 rounded-lg mb-2"><span class="text-[10px] font-bold">KPay</span>
                         </div>
                     </div>
                     <input type="hidden" id="transferAccountType" required>
-                    <input type="text" id="senderName" placeholder="လႊဲသူအမည္" class="w-full p-4 rounded-2xl" required>
-                    <input type="text" id="receiverName" placeholder="လက္ခံသူအမည္" class="w-full p-4 rounded-2xl" required>
-                    <input type="tel" id="senderPhoneTH" placeholder="ထိုင္းဖုန္းနံပါတ္" class="w-full p-4 rounded-2xl" required>
-                    <input type="tel" id="receiverPhoneMM" placeholder="ျမန္မာဖုန္းနံပါတ္" class="w-full p-4 rounded-2xl" required>
-                    <div class="space-y-2"><label class="text-[10px] font-bold text-slate-500 ml-2 uppercase">လက္ခံသူ၏ဘဏ္ QR</label><input type="file" id="bankQrFile" accept="image/*" class="w-full p-2 text-xs text-slate-400" required></div>`;
+                    <input type="text" id="senderName" placeholder="လွှဲသူအမည်" class="w-full p-4 rounded-2xl outline-none" required>
+                    <input type="text" id="receiverName" placeholder="လက်ခံသူအမည်" class="w-full p-4 rounded-2xl outline-none" required>
+                    <input type="tel" id="senderPhoneTH" placeholder="ထိုင်းဖုန်းနံပါတ်" class="w-full p-4 rounded-2xl outline-none" required>
+                    <input type="tel" id="receiverPhoneMM" placeholder="မြန်မာဖုန်းနံပါတ်" class="w-full p-4 rounded-2xl outline-none" required>
+                    <div class="space-y-2"><label class="text-[10px] font-bold text-slate-500 ml-2 uppercase">လက်ခံသူ၏ဘဏ် QR (ပုံထည့်ရန်)</label><input type="file" id="bankQrFile" accept="image/*" class="w-full p-3 text-xs text-slate-400" required></div>`;
             } else if (currentTransferTab === 'phone-bill') {
                 html += `
                     <div class="grid grid-cols-4 gap-2">
                         ${['ATOM', 'MPT', 'Mytel', 'U9'].map(net => `
-                            <div onclick="window.selectSIM('${net}', this)" class="phone-bill-option p-2 glass-card border-white/5 flex flex-col items-center cursor-pointer">
+                            <div onclick="window.selectSIM('${net}', this)" class="phone-bill-option p-2 glass-card border-white/5 flex flex-col items-center cursor-pointer hover:bg-white/5">
                                 <img src="${adminBankInfo[net.toLowerCase()+'URL'] || 'https://placehold.co/32x32?text='+net[0]}" class="w-8 h-8 rounded-md mb-1">
                                 <span class="text-[8px] font-bold">${net}</span>
                             </div>`).join('')}
                     </div>
                     <input type="hidden" id="phoneBillType" required>
-                    <input type="tel" id="phoneBillNumber" placeholder="ေဘထည့္မည့္ ဖုန္းနံပါတ္" class="w-full p-4 rounded-2xl" required>`;
+                    <input type="tel" id="phoneBillNumber" placeholder="ဘေထည့်မည့် ဖုန်းနံပါတ်" class="w-full p-4 rounded-2xl outline-none" required>`;
             } else {
-                html += `<input type="text" id="senderName" placeholder="လႊဲသူအမည္" class="w-full p-4 rounded-2xl" required><input type="text" id="receiverName" placeholder="လက္ခံသူအမည္" class="w-full p-4 rounded-2xl" required><textarea id="deliveryAddress" placeholder="အိမ္လိပ္စာ အျပည့္အစုံ" class="w-full p-4 rounded-2xl" rows="3" required></textarea>`;
+                html += `
+                    <input type="text" id="senderName" placeholder="လွှဲသူအမည်" class="w-full p-4 rounded-2xl outline-none" required>
+                    <input type="text" id="receiverName" placeholder="လက်ခံသူအမည်" class="w-full p-4 rounded-2xl outline-none" required>
+                    <input type="tel" id="senderPhoneTH" placeholder="ထိုင်းဖုန်းနံပါတ်" class="w-full p-4 rounded-2xl outline-none" required>
+                    <input type="tel" id="receiverPhoneMM" placeholder="မြန်မာဖုန်းနံပါတ်" class="w-full p-4 rounded-2xl outline-none" required>
+                    <textarea id="deliveryAddress" placeholder="အိမ်လိပ်စာ အပြည့်အစုံ" class="w-full p-4 rounded-2xl outline-none" rows="3" required></textarea>`;
             }
-            html += `<div class="relative"><input type="number" id="amountInput" placeholder="ပမာဏထည့္ပါ" class="w-full p-4 pr-16 rounded-2xl font-bold" required><select id="amountDirection" class="absolute right-2 top-2 bottom-2 bg-slate-800 text-xs rounded-xl border-none"><option value="THB_MMK">THB</option><option value="MMK_THB" ${currentTransferTab !== 'home' ? 'disabled' : ''}>MMK</option></select></div><div class="space-y-2"><label class="text-[10px] font-bold text-slate-500 ml-2 uppercase">ေငြလႊဲစလစ္ (Receipt)</label><input type="file" id="receiptFile" accept="image/*" class="w-full p-2 text-xs text-slate-400" required></div>`;
+            html += `<div class="relative"><input type="number" id="amountInput" placeholder="ပမာဏထည့်ပါ" class="w-full p-4 pr-16 rounded-2xl font-bold outline-none" required><select id="amountDirection" class="absolute right-2 top-2 bottom-2 bg-slate-800 text-xs rounded-xl border-none"><option value="THB_MMK">THB</option><option value="MMK_THB" ${currentTransferTab !== 'home' ? 'disabled' : ''}>MMK</option></select></div><div class="space-y-2"><label class="text-[10px] font-bold text-slate-500 ml-2 uppercase">ငွေလွှဲစလစ် (ပုံထည့်ရန်)</label><input type="file" id="receiptFile" accept="image/*" class="w-full p-3 text-xs text-slate-400" required></div>`;
             container.innerHTML = html;
         };
 
         const renderInbox = () => {
-            const content = document.getElementById('content-area'); if(!content) return;
-            content.innerHTML = `<div class="space-y-4"><h2 class="text-xl font-bold px-2">အဝင္စာ (Inbox)</h2>${userNotifications.length === 0 ? `<div class="text-center py-20 text-slate-500">မက္ေဆ့ခ္်မရွိေသးပါ</div>` : userNotifications.map(n => `<div onclick="window.markRead('${n.id}')" class="glass-card p-5 relative overflow-hidden ${n.isRead ? 'opacity-60' : 'border-emerald-500/30'}">${!n.isRead ? '<div class="absolute top-0 right-0 w-2 h-2 bg-emerald-500 rounded-full m-3"></div>' : ''}<h4 class="font-bold text-sm mb-1">${n.title}</h4><p class="text-slate-400 text-xs">${n.message}</p>${n.imageURL ? `<img src="${n.imageURL}" class="mt-3 rounded-xl max-h-40 w-full object-cover">` : ''}</div>`).join('')}</div>`;
+            const content = document.getElementById('content-area');
+            content.innerHTML = `<div class="space-y-4"><h2 class="text-xl font-bold px-2">အဝင်စာ (Inbox)</h2>${userNotifications.length === 0 ? `<div class="text-center py-20 text-slate-500">မက်ဆေ့ခ်ျမရှိသေးပါ</div>` : userNotifications.map(n => `<div onclick="window.markRead('${n.id}')" class="glass-card p-5 relative overflow-hidden ${n.isRead ? 'opacity-60' : 'border-emerald-500/30'} cursor-pointer hover:bg-white/5">${!n.isRead ? '<div class="absolute top-0 right-0 w-2 h-2 bg-emerald-500 rounded-full m-3 shadow-lg"></div>' : ''}<h4 class="font-bold text-sm mb-1">${n.title}</h4><p class="text-slate-400 text-xs">${n.message}</p>${n.imageURL ? `<img src="${n.imageURL}" onclick="event.stopPropagation(); window.viewFullImage(this.src)" class="mt-3 rounded-xl max-h-40 w-full object-cover border border-white/5 cursor-pointer">` : ''}</div>`).join('')}</div>`;
         };
 
         const renderProfile = () => {
-            const content = document.getElementById('content-area'); if(!content) return;
+            const content = document.getElementById('content-area');
             const user = auth.currentUser;
             const completedCount = userTransfers.filter(t => t.status === 'Completed').length;
-
             content.innerHTML = `
-                <div class="space-y-6 animate-fadeIn">
-                    <!-- Profile Card -->
-                    <div class="glass-card p-6 flex flex-col items-center">
-                        <div class="relative">
-                            <div class="w-24 h-24 profile-icon-bg rounded-3xl flex items-center justify-center border border-emerald-500/30 shadow-xl">
-                                <i class="fa-solid fa-user-gear text-4xl text-emerald-500"></i>
-                            </div>
-                            <div class="absolute -bottom-2 -right-2 w-8 h-8 bg-emerald-500 rounded-full border-4 border-slate-900 flex items-center justify-center">
-                                <i class="fa-solid fa-check text-[10px] text-white"></i>
-                            </div>
+                <div class="space-y-6 animate-fadeIn pb-10">
+                    <div class="glass-card p-8 flex flex-col items-center relative overflow-hidden">
+                        <div class="w-24 h-24 bg-slate-800/80 rounded-3xl flex items-center justify-center mb-4 border border-emerald-500/20 shadow-2xl">
+                            <i class="fa-solid fa-circle-user text-5xl text-emerald-500"></i>
                         </div>
-                        <h2 class="mt-4 text-xl font-bold text-white">${user.displayName || 'WaiYan User'}</h2>
-                        <p class="text-slate-400 text-xs">${user.email}</p>
+                        <h2 class="text-2xl font-bold text-white">${user.displayName || 'WaiYan User'}</h2>
+                        <p class="text-slate-500 text-xs mb-6">${user.email}</p>
                         
-                        <div class="flex gap-4 mt-6 w-full">
-                            <div class="flex-1 bg-slate-900/50 p-3 rounded-2xl text-center border border-white/5">
-                                <p class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Transfers</p>
-                                <p class="text-lg font-bold text-emerald-400">${userTransfers.length}</p>
+                        <div class="grid grid-cols-2 gap-4 w-full">
+                            <div class="bg-slate-900/60 p-4 rounded-2xl text-center border border-white/5">
+                                <p class="text-[10px] text-slate-500 uppercase font-black">ငွေလွှဲမှုစုစုပေါင်း</p>
+                                <p class="text-xl font-bold text-emerald-400">${userTransfers.length}</p>
                             </div>
-                            <div class="flex-1 bg-slate-900/50 p-3 rounded-2xl text-center border border-white/5">
-                                <p class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Success</p>
-                                <p class="text-lg font-bold text-emerald-400">${completedCount}</p>
+                            <div class="bg-slate-900/60 p-4 rounded-2xl text-center border border-white/5">
+                                <p class="text-[10px] text-slate-500 uppercase font-black">အောင်မြင်မှု</p>
+                                <p class="text-xl font-bold text-blue-400">${completedCount}</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Details Card -->
                     <div class="glass-card p-6 space-y-4">
                         <div class="flex items-center space-x-4">
-                            <div class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400">
-                                <i class="fa-solid fa-id-badge"></i>
-                            </div>
-                            <div>
-                                <p class="text-[10px] text-slate-500 uppercase">User Identification</p>
-                                <p class="text-xs font-medium text-white">${userId}</p>
-                            </div>
+                            <div class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center"><i class="fa-solid fa-id-card text-emerald-500/50"></i></div>
+                            <div><p class="text-[10px] text-slate-500 uppercase">User ID</p><p class="text-[11px] font-medium text-white/80">${userId}</p></div>
                         </div>
                         <div class="flex items-center space-x-4">
-                            <div class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400">
-                                <i class="fa-solid fa-calendar-check"></i>
-                            </div>
-                            <div>
-                                <p class="text-[10px] text-slate-500 uppercase">Member Since</p>
-                                <p class="text-xs font-medium text-white">${new Date(user.metadata.creationTime).toLocaleDateString('my-MM', {day:'numeric', month:'short', year:'numeric'})}</p>
-                            </div>
+                            <div class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center"><i class="fa-solid fa-clock text-emerald-500/50"></i></div>
+                            <div><p class="text-[10px] text-slate-500 uppercase">ဝင်ရောက်ခဲ့သည့်အချိန်</p><p class="text-[11px] font-medium text-white/80">${new Date(user.metadata.lastSignInTime).toLocaleString()}</p></div>
                         </div>
                     </div>
 
-                    <button onclick="window.handleLogout()" class="w-full py-4 glass-card border-rose-500/20 text-rose-500 font-bold text-sm hover:bg-rose-500 hover:text-white transition-all">
-                        <i class="fa-solid fa-right-from-bracket mr-2"></i> အေကာင့္မွထြက္ရန္
-                    </button>
+                    <button onclick="window.handleLogout()" class="w-full py-4 glass-card border-rose-500/20 text-rose-500 font-bold text-xs hover:bg-rose-600 hover:text-white transition-all shadow-lg">အကောင့်မှ ထွက်မည်</button>
+                    
+                    <div class="space-y-4 pt-2">
+                        <h3 class="text-xs font-bold text-slate-400 px-2 uppercase tracking-widest">ငွေလွှဲမှုမှတ်တမ်း</h3>
+                        ${userTransfers.map(t => `<div class="glass-card p-4 flex items-center justify-between border-white/5"><div><p class="text-xs font-bold">${t.amountTHB.toFixed(2)} THB ➜ ${t.amountMMK.toFixed(0)} MMK</p><p class="text-[10px] text-slate-500">${t.timestamp?.toDate().toLocaleDateString()}</p></div><span class="text-[8px] px-2 py-1 rounded-full font-black ${t.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}">${t.status.toUpperCase()}</span></div>`).join('')}
+                    </div>
                 </div>`;
         };
 
@@ -413,7 +407,6 @@
             if (name === 'home') renderHome(); else if (name === 'transfer') renderTransfer(); else if (name === 'inbox') renderInbox(); else if (name === 'profile') renderProfile();
         };
 
-        // Global functions
         window.setTransferTab = (tab) => { currentTransferTab = tab; renderTransfer(); };
         window.selectPayment = (method, el) => {
             document.getElementById('transferAccountType').value = method;
@@ -426,49 +419,58 @@
             el.classList.add('selected');
         };
         window.showScreen = showScreen;
-        window.downloadImg = (url) => { if(url) window.open(url, '_blank'); };
-        window.handleLogout = async () => {
-            try { await signOut(auth); showMessage("အေကာင့္မွ ထြက္ၿပီးပါၿပီ"); } catch (e) { showMessage("Error logout", "error"); }
-        };
+        window.handleLogout = async () => { try { await signOut(auth); showMessage("ထွက်ပြီးပါပြီ"); } catch (e) { showMessage("Error logout", "error"); } };
 
         window.submitTransfer = async (type) => {
             const receipt = document.getElementById('receiptFile').files[0];
-            const amount = parseFloat(document.getElementById('amountInput').value);
-            if (!receipt || isNaN(amount) || amount <= 0) return showMessage('အခ်က္အလက္အျပည့္အစုံ ျဖည့္ပါ', 'error');
+            const amountInput = document.getElementById('amountInput');
+            const amountValue = parseFloat(amountInput.value);
+            
+            if (!receipt || isNaN(amountValue) || amountValue <= 0) return showMessage('အချက်အလက်အပြည့်အစုံ ဖြည့်ပါ', 'error');
             
             document.getElementById('loading-overlay').classList.remove('hidden');
             try {
                 const receiptUrl = await uploadToCloudinary(receipt);
                 let bankQrUrl = 'N/A';
+                
+                // Fields for Admin
+                const senderName = document.getElementById('senderName')?.value || 'N/A';
+                const receiverName = document.getElementById('receiverName')?.value || 'N/A';
+                const senderPhoneTH = document.getElementById('senderPhoneTH')?.value || 'N/A';
+                const receiverPhoneMM = document.getElementById('receiverPhoneMM')?.value || 'N/A';
+                const transferAccountType = document.getElementById('transferAccountType')?.value || 'N/A';
+                const phoneBillType = document.getElementById('phoneBillType')?.value || 'N/A';
+                const phoneBillNumber = document.getElementById('phoneBillNumber')?.value || 'N/A';
+                const deliveryAddress = document.getElementById('deliveryAddress')?.value || 'N/A';
+
                 if (type === 'account') {
                     const qrFile = document.getElementById('bankQrFile').files[0];
                     if (qrFile) bankQrUrl = await uploadToCloudinary(qrFile);
-                    if (!document.getElementById('transferAccountType').value) throw new Error("အေကာင့္အမ်ိဳးအစားေ႐ြးပါ");
+                    if (transferAccountType === 'N/A') throw new Error("WavePay သို့မဟုတ် KPay ရွေးပါ");
                 }
-                if (type === 'phone-bill' && !document.getElementById('phoneBillType').value) throw new Error("SIM အမ်ိဳးအစားေ႐ြးပါ");
+                if (type === 'phone-bill' && phoneBillType === 'N/A') throw new Error("SIM အမျိုးအစားရွေးပါ");
 
                 const dir = document.getElementById('amountDirection').value;
                 let thb, mmk;
                 if (dir === 'THB_MMK') {
-                    thb = amount;
+                    thb = amountValue;
                     const rate = (type === 'home') ? (100000 / currentRates.rateHomeDeliveryTHB_THB_MMK) : currentRates.THB_TO_MMK;
-                    mmk = amount * rate;
+                    mmk = amountValue * rate;
                 } else {
-                    mmk = amount; thb = amount / (100000 / currentRates.rateHomeDeliveryTHB_MMK_THB);
+                    mmk = amountValue; 
+                    thb = amountValue / (100000 / currentRates.rateHomeDeliveryTHB_MMK_THB);
                 }
 
                 const data = {
                     senderId: userId, senderEmail: userEmail, amountTHB: thb, amountMMK: mmk, transferType: type,
                     receiptImageURL: receiptUrl, bankQrImageURL: bankQrUrl, status: 'Pending', timestamp: serverTimestamp(),
-                    senderName: document.getElementById('senderName')?.value || 'N/A',
-                    receiverName: document.getElementById('receiverName')?.value || 'N/A',
-                    phoneBillType: document.getElementById('phoneBillType')?.value || 'N/A',
-                    phoneBillNumber: document.getElementById('phoneBillNumber')?.value || 'N/A',
-                    deliveryAddress: document.getElementById('deliveryAddress')?.value || 'N/A'
+                    senderName, receiverName, senderPhoneTH, receiverPhoneMM,
+                    phoneBillType, phoneBillNumber, deliveryAddress, transferAccountType
                 };
+                
                 await setDoc(doc(collection(db, PUBLIC_DATA_PATH, 'transfers')), data);
-                showMessage('ေငြလႊဲေတာင္းဆိုမႈ ေအာင္ျမင္ပါသည္'); showScreen('home');
-            } catch (e) { showMessage(e.message || 'အမွားရွိပါသည္', 'error'); } 
+                showMessage('ငွေလွှဲတောင်းဆိုမှု အောင်မြင်ပါသည်'); showScreen('home');
+            } catch (e) { showMessage(e.message || 'အမှားရှိပါသည်', 'error'); } 
             finally { document.getElementById('loading-overlay').classList.add('hidden'); }
         };
         window.markRead = async (id) => { await updateDoc(doc(db, `artifacts/${APP_ID}/users/${userId}`, 'notifications', id), { isRead: true }); };
