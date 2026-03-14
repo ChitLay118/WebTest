@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ထိုင်း-မြန်မာငွေလွှဲ (WaiYan)</title>
+    <title>WaiYan Remittance</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Padauk:wght@400;700&display=swap" rel="stylesheet">
@@ -92,15 +92,17 @@
     
     <div id="message-box" class="fixed top-6 left-1/2 -translate-x-1/2 z-[110] w-[90%] max-w-md transition-all duration-500 transform translate-y-[-150%]"></div>
 
+    <!-- Auth Screen -->
     <div id="auth-screen" class="min-h-screen flex items-center justify-center p-6"></div>
     
+    <!-- Main App Content -->
     <div id="app-content-wrapper" class="max-w-xl mx-auto min-h-screen flex flex-col hidden relative">
-        <header id="app-header" class="px-6 py-8 flex flex-col items-center">
-            <div class="w-14 h-14 bg-emerald-500/10 rounded-2xl flex items-center justify-center mb-4 border border-emerald-500/20">
+        <header id="app-header" class="px-6 py-6 flex flex-col items-center">
+            <div class="w-14 h-14 bg-emerald-500/10 rounded-2xl flex items-center justify-center mb-2 border border-emerald-500/20 shadow-lg shadow-emerald-500/10">
                 <i class="fa-solid fa-paper-plane text-2xl text-emerald-400"></i>
             </div>
-            <h1 class="text-xl font-bold text-white">ထိုင်း-မြန်မာငွေလွှဲ (WaiYan)</h1>
-            <div id="user-info" class="text-[10px] mt-2 px-3 py-1 bg-slate-800/50 rounded-full text-slate-400">Loading...</div>
+            <!-- ခေါင်းစဉ် (Title) ကို ဖြုတ်လိုက်ပါသည် -->
+            <div id="user-info" class="text-[10px] px-3 py-1 bg-slate-800/50 rounded-full text-slate-400">Loading...</div>
         </header>
 
         <main id="content-area" class="flex-grow px-4 pb-24 scrollable-content"></main>
@@ -130,19 +132,15 @@
         const APP_ID = 'thai-myanmar-remittance';
         let app, db, auth, userId = null, userEmail = null, isAuthReady = false, currentScreen = 'home', currentTransferTab = 'account';
 
-        let currentRates = { 
-            THB_TO_MMK: 121.95, 
-            rateHomeDeliveryTHB_THB_MMK: 820, 
-            rateHomeDeliveryTHB_MMK_THB: 850, 
-            lastUpdated: 'Loading...' 
-        };
+        let currentRates = { THB_TO_MMK: 121.95, rateHomeDeliveryTHB_THB_MMK: 820, rateHomeDeliveryTHB_MMK_THB: 850, lastUpdated: 'Loading...' };
         let adminBankInfo = { image1URL: '', image2URL: '', image3URL: '', image4URL: '', wavePayURL: '', kpayURL: '', atomURL: '', mptURL: '', mytelURL: '', u9URL: '' };
         let userTransfers = [], userNotifications = [];
 
         const showMessage = (msg, type = 'success') => {
             const box = document.getElementById('message-box');
+            if(!box) return;
             const bgColor = type === 'success' ? 'from-emerald-600 to-teal-700' : 'from-rose-600 to-red-700';
-            box.innerHTML = `<div class="bg-gradient-to-r ${bgColor} text-white p-4 rounded-2xl shadow-2xl flex items-center space-x-3 border border-white/20"><i class="fa-solid fa-info-circle"></i><p class="font-medium text-sm">${msg}</p></div>`;
+            box.innerHTML = `<div class="bg-gradient-to-r ${bgColor} text-white p-4 rounded-2xl shadow-2xl flex items-center space-x-3 border border-white/20"><i class="fa-solid fa-circle-info"></i><p class="font-medium text-sm">${msg}</p></div>`;
             box.classList.remove('translate-y-[-150%]'); box.classList.add('translate-y-0');
             setTimeout(() => { box.classList.remove('translate-y-0'); box.classList.add('translate-y-[-150%]'); }, 4000);
         };
@@ -160,51 +158,77 @@
             app = initializeApp(FIREBASE_CONFIG);
             db = getFirestore(app);
             auth = getAuth(app);
+            
             onAuthStateChanged(auth, (user) => {
                 if (user) {
-                    userId = user.uid; userEmail = user.email;
-                    document.getElementById('user-info').textContent = `ID: ${userId.substring(0,10)}`;
+                    userId = user.uid;
+                    userEmail = user.email;
+                    document.getElementById('user-info').textContent = `USER: ${user.displayName || user.email.split('@')[0]}`;
                     document.getElementById('auth-screen').classList.add('hidden');
                     document.getElementById('app-content-wrapper').classList.remove('hidden');
-                    if (!isAuthReady) { isAuthReady = true; updateStaticText(); loadRates(); loadAdminBankInfo(); loadTransfers(); loadNotifications(); showScreen('home'); }
+                    
+                    if (!isAuthReady) {
+                        isAuthReady = true;
+                        updateStaticText();
+                        loadRates();
+                        loadAdminBankInfo();
+                        loadTransfers();
+                        loadNotifications();
+                        // တန်းပေါ်အောင် ဒီမှာ ခေါ်ပေးထားပါသည်
+                        setTimeout(() => showScreen('home'), 100);
+                    }
                 } else {
-                    isAuthReady = false; 
+                    isAuthReady = false;
                     document.getElementById('app-content-wrapper').classList.add('hidden');
-                    document.getElementById('auth-screen').classList.remove('hidden'); renderAuthScreen();
+                    document.getElementById('auth-screen').classList.remove('hidden');
+                    renderAuthScreen(true);
                 }
             });
         };
 
         const renderAuthScreen = (isLogin = true) => {
-            document.getElementById('auth-screen').innerHTML = `
+            const container = document.getElementById('auth-screen');
+            if(!container) return;
+            container.innerHTML = `
                 <div class="glass-card w-full max-w-sm p-8 space-y-6">
-                    <h2 class="text-2xl font-bold text-center">${isLogin ? 'အကောင့်ဝင်ပါ' : 'အကောင့်ဖွင့်ပါ'}</h2>
+                    <div class="text-center space-y-2">
+                        <i class="fa-solid fa-shield-halved text-4xl text-emerald-500"></i>
+                        <h2 class="text-2xl font-bold">${isLogin ? 'အကောင့်ဝင်ပါ' : 'အကောင့်ဖွင့်ပါ'}</h2>
+                    </div>
                     <form onsubmit="event.preventDefault(); window.handleAuthSubmit(${isLogin})" class="space-y-4">
-                        ${!isLogin ? `<input type="text" id="username" required class="w-full p-4 rounded-2xl text-white" placeholder="အမည်">` : ''}
-                        <input type="email" id="email" required class="w-full p-4 rounded-2xl text-white" placeholder="Email">
-                        <input type="password" id="password" required class="w-full p-4 rounded-2xl text-white" placeholder="Password (အနည်းဆုံး ၆ လုံး)">
-                        <button type="submit" class="btn-gradient w-full py-4 rounded-2xl text-white font-bold">${isLogin ? 'ဝင်မည်' : 'ဖွင့်မည်'}</button>
+                        ${!isLogin ? `<input type="text" id="username" required class="w-full p-4 rounded-2xl text-white outline-none" placeholder="အမည်">` : ''}
+                        <input type="email" id="email" required class="w-full p-4 rounded-2xl text-white outline-none" placeholder="Email">
+                        <input type="password" id="password" required class="w-full p-4 rounded-2xl text-white outline-none" placeholder="Password (အနည်းဆုံး ၆ လုံး)">
+                        <button type="submit" class="btn-gradient w-full py-4 rounded-2xl text-white font-bold shadow-lg">${isLogin ? 'ဝင်မည်' : 'အကောင့်ဖွင့်မည်'}</button>
                     </form>
-                    <p class="text-center text-sm text-slate-400 cursor-pointer" onclick="renderAuthScreen(!${isLogin})">${isLogin ? 'အကောင့်မရှိသေးပါက ဤနေရာတွင်ဖွင့်ပါ' : 'အကောင့်ရှိပြီးသားဖြစ်ပါက ဝင်ရန်'}</p>
+                    <p class="text-center text-xs text-slate-400 cursor-pointer hover:text-emerald-400" onclick="window.toggleAuth(${!isLogin})">
+                        ${isLogin ? 'အကောင့်မရှိသေးပါက ဤနေရာတွင်ဖွင့်ပါ' : 'အကောင့်ရှိပြီးသားဖြစ်ပါက ဝင်ရန်'}
+                    </p>
                 </div>`;
         };
 
+        window.toggleAuth = (isLogin) => renderAuthScreen(isLogin);
+
         window.handleAuthSubmit = async (isLogin) => {
-            const email = document.getElementById('email').value; 
+            const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             document.getElementById('loading-overlay').classList.remove('hidden');
+            
             try {
                 if (isLogin) {
                     await signInWithEmailAndPassword(auth, email, password);
-                    showMessage("အကောင့်ဝင်ခြင်း အောင်မြင်ပါသည်");
                 } else {
                     const name = document.getElementById('username').value;
+                    if (password.length < 6) throw new Error("Password အနည်းဆုံး ၆ လုံးရှိရပါမည်");
                     const uc = await createUserWithEmailAndPassword(auth, email, password);
                     await updateProfile(uc.user, { displayName: name });
-                    showMessage("အကောင့်ဖွင့်ခြင်း အောင်မြင်ပါသည်");
                 }
-            } catch (e) { 
-                showMessage("အချက်အလက် မှားယွင်းနေပါသည် (သို့မဟုတ်) Password အနည်းဆုံး ၆ လုံးရှိရပါမည်", 'error'); 
+                showMessage("အောင်မြင်ပါသည်");
+            } catch (e) {
+                let errorMsg = "အချက်အလက် မှားယွင်းနေပါသည်";
+                if(e.code === 'auth/email-already-in-use') errorMsg = "ဤ Email ဖြင့် အကောင့်ဖွင့်ထားပြီးသားဖြစ်နေပါသည်";
+                if(e.message) errorMsg = e.message;
+                showMessage(errorMsg, 'error');
             } finally {
                 document.getElementById('loading-overlay').classList.add('hidden');
             }
@@ -212,87 +236,42 @@
 
         const updateStaticText = () => {
             const navContainer = document.getElementById('nav-container');
+            if(!navContainer) return;
             navContainer.innerHTML = `
-                <button onclick="showScreen('home')" class="nav-item flex flex-col items-center flex-1">
-                    <i class="fa-solid fa-house-chimney text-xl"></i><span class="text-[10px] mt-1">ပင်မ</span>
+                <button id="nav-home" onclick="showScreen('home')" class="nav-item flex flex-col items-center flex-1">
+                    <i class="fa-solid fa-house-chimney text-xl"></i><span class="text-[10px] mt-1 font-medium">ပင်မ</span>
                 </button>
-                <button onclick="showScreen('transfer')" class="nav-item flex flex-col items-center flex-1">
-                    <i class="fa-solid fa-circle-plus text-2xl"></i><span class="text-[10px] mt-1">လွှဲမည်</span>
+                <button id="nav-transfer" onclick="showScreen('transfer')" class="nav-item flex flex-col items-center flex-1">
+                    <i class="fa-solid fa-circle-plus text-2xl"></i><span class="text-[10px] mt-1 font-medium">လွှဲမည်</span>
                 </button>
-                <button onclick="showScreen('inbox')" class="nav-item flex flex-col items-center flex-1 relative">
-                    <i class="fa-solid fa-message text-xl"></i><span id="inbox-badge" class="absolute top-0 right-1/4 w-2 h-2 bg-rose-500 rounded-full hidden"></span><span class="text-[10px] mt-1">အဝင်စာ</span>
+                <button id="nav-inbox" onclick="showScreen('inbox')" class="nav-item flex flex-col items-center flex-1 relative">
+                    <i class="fa-solid fa-message text-xl"></i><span id="inbox-badge" class="absolute top-0 right-1/4 w-2 h-2 bg-rose-500 rounded-full hidden"></span><span class="text-[10px] mt-1 font-medium">အဝင်စာ</span>
                 </button>
-                <button onclick="showScreen('profile')" class="nav-item flex flex-col items-center flex-1">
-                    <i class="fa-solid fa-user-circle text-xl"></i><span class="text-[10px] mt-1">ကျွန်ုပ်</span>
+                <button id="nav-profile" onclick="showScreen('profile')" class="nav-item flex flex-col items-center flex-1">
+                    <i class="fa-solid fa-user-circle text-xl"></i><span class="text-[10px] mt-1 font-medium">ကျွန်ုပ်</span>
                 </button>`;
         };
 
-        const loadRates = () => {
-            onSnapshot(doc(db, PUBLIC_DATA_PATH, 'rates', 'current'), (ds) => {
-                if (ds.exists()) {
-                    const d = ds.data();
-                    currentRates = { 
-                        THB_TO_MMK: d.rateBuyMMK || 121.95, 
-                        rateHomeDeliveryTHB_THB_MMK: d.rateHomeDeliveryTHB_THB_MMK || 820, 
-                        rateHomeDeliveryTHB_MMK_THB: d.rateHomeDeliveryTHB_MMK_THB || 850, 
-                        lastUpdated: d.lastUpdated ? d.lastUpdated.toDate().toLocaleString('my-MM') : 'ယခုတင်' 
-                    };
-                    if (currentScreen === 'home') renderHome();
-                }
-            });
-        };
-
-        const loadAdminBankInfo = () => {
-            onSnapshot(doc(db, PUBLIC_DATA_PATH, 'config', 'bankInfo'), (ds) => {
-                if (ds.exists()) { adminBankInfo = { ...adminBankInfo, ...ds.data() }; if (currentScreen === 'home') renderHome(); }
-            });
-        };
-
-        const loadTransfers = () => {
-            onSnapshot(collection(db, PUBLIC_DATA_PATH, 'transfers'), (snapshot) => {
-                userTransfers = snapshot.docs.map(d => ({ id: d.id, ...d.data() })).filter(t => t.senderId === userId).sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-                if (currentScreen === 'profile') renderProfile();
-            });
-        };
-
-        const loadNotifications = () => {
-            onSnapshot(collection(db, `artifacts/${APP_ID}/users/${userId}`, 'notifications'), (snapshot) => {
-                userNotifications = snapshot.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-                document.getElementById('inbox-badge')?.classList.toggle('hidden', userNotifications.filter(n => !n.isRead).length === 0);
-                if (currentScreen === 'inbox') renderInbox();
-            });
-        };
+        const PUBLIC_DATA_PATH = `artifacts/${APP_ID}/public/data`;
+        const loadRates = () => { onSnapshot(doc(db, PUBLIC_DATA_PATH, 'rates', 'current'), (ds) => { if (ds.exists()) { const d = ds.data(); currentRates = { THB_TO_MMK: d.rateBuyMMK || 121.95, rateHomeDeliveryTHB_THB_MMK: d.rateHomeDeliveryTHB_THB_MMK || 820, rateHomeDeliveryTHB_MMK_THB: d.rateHomeDeliveryTHB_MMK_THB || 850, lastUpdated: d.lastUpdated ? d.lastUpdated.toDate().toLocaleString('my-MM') : 'ယခုတင်' }; if (currentScreen === 'home') renderHome(); } }); };
+        const loadAdminBankInfo = () => { onSnapshot(doc(db, PUBLIC_DATA_PATH, 'config', 'bankInfo'), (ds) => { if (ds.exists()) { adminBankInfo = { ...adminBankInfo, ...ds.data() }; if (currentScreen === 'home') renderHome(); } }); };
+        const loadTransfers = () => { onSnapshot(collection(db, PUBLIC_DATA_PATH, 'transfers'), (snapshot) => { userTransfers = snapshot.docs.map(d => ({ id: d.id, ...d.data() })).filter(t => t.senderId === userId).sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)); if (currentScreen === 'profile') renderProfile(); }); };
+        const loadNotifications = () => { onSnapshot(collection(db, `artifacts/${APP_ID}/users/${userId}`, 'notifications'), (snapshot) => { userNotifications = snapshot.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)); const unread = userNotifications.filter(n => !n.isRead).length; if(document.getElementById('inbox-badge')) document.getElementById('inbox-badge').classList.toggle('hidden', unread === 0); if (currentScreen === 'inbox') renderInbox(); }); };
 
         const renderHome = () => {
             const content = document.getElementById('content-area');
+            if(!content) return;
             const rateBankBill = (100000 / currentRates.THB_TO_MMK).toFixed(2);
             const rateHome = currentRates.rateHomeDeliveryTHB_THB_MMK;
-
             content.innerHTML = `
-                <div class="space-y-6">
+                <div class="space-y-6 animate-fadeIn">
                     <div class="flex justify-between items-end px-2">
                         <div><h2 class="text-xl font-bold">ယနေ့ငွေလဲနှုန်း</h2><p class="text-xs text-slate-500">Update: ${currentRates.lastUpdated}</p></div>
                         <div class="bg-emerald-500/10 text-emerald-400 text-[10px] px-2 py-1 rounded-lg border border-emerald-500/20 font-bold uppercase">Live</div>
                     </div>
                     <div class="grid gap-4">
-                        <!-- Rate 1: Bank & Phone Bill -->
-                        <div class="glass-card p-6 border-emerald-500/10">
-                            <h3 class="text-emerald-400 font-bold text-sm mb-4"><i class="fa-solid fa-wallet mr-2"></i> ဘဏ်ထဲသို့ငွေထည့်ရန်နှင့် ဖုန်းဘေဖြည့်ရန်</h3>
-                            <div class="flex items-center justify-between">
-                                <div class="text-center"><p class="text-[10px] text-slate-500 uppercase">ဘတ်</p><p class="text-2xl font-black">${rateBankBill}</p></div>
-                                <i class="fa-solid fa-arrow-right text-emerald-500"></i>
-                                <div class="text-center"><p class="text-[10px] text-slate-500 uppercase">ကျပ်</p><p class="text-2xl font-black">100,000</p></div>
-                            </div>
-                        </div>
-                        <!-- Rate 2: Home Delivery -->
-                        <div class="glass-card p-6 border-blue-500/10">
-                            <h3 class="text-blue-400 font-bold text-sm mb-4"><i class="fa-solid fa-house-chimney mr-2"></i> အိမ်သို့ငွေလွှဲရန်</h3>
-                            <div class="flex items-center justify-between">
-                                <div class="text-center"><p class="text-[10px] text-slate-500 uppercase">ဘတ်</p><p class="text-2xl font-black">${rateHome}</p></div>
-                                <i class="fa-solid fa-arrow-right text-blue-500"></i>
-                                <div class="text-center"><p class="text-[10px] text-slate-500 uppercase">ကျပ်</p><p class="text-2xl font-black">100,000</p></div>
-                            </div>
-                        </div>
+                        <div class="glass-card p-6 border-emerald-500/10"><h3 class="text-emerald-400 font-bold text-sm mb-4"><i class="fa-solid fa-wallet mr-2"></i> ဘဏ်ထဲသို့ငွေထည့်ရန်နှင့် ဖုန်းဘေ</h3><div class="flex items-center justify-between"><div class="text-center"><p class="text-[10px] text-slate-500 uppercase">ဘတ်</p><p class="text-2xl font-black">${rateBankBill}</p></div><i class="fa-solid fa-arrow-right text-emerald-500"></i><div class="text-center"><p class="text-[10px] text-slate-500 uppercase">ကျပ်</p><p class="text-2xl font-black">100,000</p></div></div></div>
+                        <div class="glass-card p-6 border-blue-500/10"><h3 class="text-blue-400 font-bold text-sm mb-4"><i class="fa-solid fa-house-chimney mr-2"></i> အိမ်သို့ငွေလွှဲရန်</h3><div class="flex items-center justify-between"><div class="text-center"><p class="text-[10px] text-slate-500 uppercase">ဘတ်</p><p class="text-2xl font-black">${rateHome}</p></div><i class="fa-solid fa-arrow-right text-blue-500"></i><div class="text-center"><p class="text-[10px] text-slate-500 uppercase">ကျပ်</p><p class="text-2xl font-black">100,000</p></div></div></div>
                     </div>
                     <div class="space-y-4">
                         <h3 class="text-sm font-bold text-slate-400 px-2 uppercase tracking-widest">MyanmarPay Accounts</h3>
@@ -305,6 +284,7 @@
 
         const renderTransfer = () => {
             const content = document.getElementById('content-area');
+            if(!content) return;
             content.innerHTML = `
                 <div class="space-y-6">
                     <div class="glass-card p-1 flex">
@@ -324,7 +304,8 @@
         };
 
         const updateTransferFields = () => {
-            const container = document.getElementById('dynamic-fields'); let html = '';
+            const container = document.getElementById('dynamic-fields'); if(!container) return;
+            let html = '';
             if (currentTransferTab === 'account') {
                 html += `
                     <div class="grid grid-cols-2 gap-3">
@@ -360,23 +341,22 @@
         };
 
         const renderInbox = () => {
-            const content = document.getElementById('content-area');
+            const content = document.getElementById('content-area'); if(!content) return;
             content.innerHTML = `<div class="space-y-4"><h2 class="text-xl font-bold px-2">အဝင်စာ (Inbox)</h2>${userNotifications.length === 0 ? `<div class="text-center py-20 text-slate-500">မက်ဆေ့ခ်ျမရှိသေးပါ</div>` : userNotifications.map(n => `<div onclick="window.markRead('${n.id}')" class="glass-card p-5 relative overflow-hidden ${n.isRead ? 'opacity-60' : 'border-emerald-500/30'}">${!n.isRead ? '<div class="absolute top-0 right-0 w-2 h-2 bg-emerald-500 rounded-full m-3"></div>' : ''}<h4 class="font-bold text-sm mb-1">${n.title}</h4><p class="text-slate-400 text-xs">${n.message}</p>${n.imageURL ? `<img src="${n.imageURL}" class="mt-3 rounded-xl max-h-40 w-full object-cover">` : ''}</div>`).join('')}</div>`;
         };
 
         const renderProfile = () => {
-            const content = document.getElementById('content-area');
+            const content = document.getElementById('content-area'); if(!content) return;
             const user = auth.currentUser;
             content.innerHTML = `
                 <div class="space-y-6">
                     <div class="glass-card p-8 text-center relative overflow-hidden">
                         <div class="w-20 h-20 bg-slate-800 rounded-3xl mx-auto flex items-center justify-center mb-4 border border-white/5 shadow-2xl"><i class="fa-solid fa-user text-3xl text-slate-600"></i></div>
                         <h2 class="text-xl font-bold">${user.displayName || 'User'}</h2>
-                        <div class="mt-4 space-y-2 text-left bg-slate-900/40 p-4 rounded-2xl text-xs text-slate-400">
+                        <div class="mt-4 space-y-2 text-left bg-slate-900/40 p-4 rounded-2xl text-[10px] text-slate-400">
                             <p><span class="text-slate-500">Email:</span> ${user.email}</p>
                             <p><span class="text-slate-500">User ID:</span> ${userId}</p>
-                            <p><span class="text-slate-500">Created:</span> ${user.metadata.creationTime}</p>
-                            <p><span class="text-slate-500">Last Login:</span> ${user.metadata.lastSignInTime}</p>
+                            <p><span class="text-slate-500">Join Date:</span> ${user.metadata.creationTime}</p>
                         </div>
                         <button onclick="window.handleLogout()" class="mt-6 px-8 py-2 bg-rose-500/10 text-rose-500 text-xs font-bold rounded-full border border-rose-500/20">LOGOUT</button>
                     </div>
@@ -387,7 +367,8 @@
         const showScreen = (name) => {
             if (!isAuthReady) return; currentScreen = name;
             document.querySelectorAll('.nav-item').forEach(el => {
-                if (el.getAttribute('onclick')?.includes(`'${name}'`)) el.classList.add('active');
+                const id = el.id.replace('nav-', '');
+                if (id === name) el.classList.add('active');
                 else el.classList.remove('active');
             });
             if (name === 'home') renderHome(); else if (name === 'transfer') renderTransfer(); else if (name === 'inbox') renderInbox(); else if (name === 'profile') renderProfile();
@@ -408,15 +389,7 @@
         window.showScreen = showScreen;
         window.downloadImg = (url) => { if(url) window.open(url, '_blank'); };
         window.handleLogout = async () => {
-            document.getElementById('loading-overlay').classList.remove('hidden');
-            try {
-                await signOut(auth);
-                showMessage("အောင်မြင်စွာ ထွက်ပြီးပါပြီ");
-            } catch (e) {
-                showMessage("Logout လုပ်၍မရပါ", "error");
-            } finally {
-                document.getElementById('loading-overlay').classList.add('hidden');
-            }
+            try { await signOut(auth); showMessage("ထွက်ပြီးပါပြီ"); } catch (e) { showMessage("Error logout", "error"); }
         };
 
         window.submitTransfer = async (type) => {
@@ -439,7 +412,6 @@
                 let thb, mmk;
                 if (dir === 'THB_MMK') {
                     thb = amount;
-                    // Fix: Bank & Phone Bill use same rate, Home Delivery uses different rate
                     const rate = (type === 'home') ? (100000 / currentRates.rateHomeDeliveryTHB_THB_MMK) : currentRates.THB_TO_MMK;
                     mmk = amount * rate;
                 } else {
