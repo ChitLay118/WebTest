@@ -29,13 +29,13 @@ const schemeFromBundleId = `manus${timestamp}`;
 const env = {
   // App branding - update these values directly (do not use env vars)
   appName: "ThaiMMPay",
-  appSlug: "ThaiMMPay",
+  appSlug: "thaimmpay",
   // S3 URL of the app logo - set this to the URL returned by generate_image when creating custom logo
   // Leave empty to use the default icon from assets/images/icon.png
-  logoUrl: "",
+  logoUrl: "https://d2xsxph8kpxj0f.cloudfront.net/310519663469399197/H5NACMmYHgthinEvZ47i6i/icon-633ZeTSUvuQpyX2Yk62LB8.png",
   scheme: schemeFromBundleId,
-  iosBundleId: bundleId,
-  androidPackage: bundleId,
+  iosBundleId: "com.thaimmpay.wynex",
+  androidPackage: "com.thaimmpay.wynex",
 };
 
 const config: ExpoConfig = {
